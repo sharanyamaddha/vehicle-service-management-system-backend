@@ -79,4 +79,5 @@ ehthumbs.db
 data/db/
 
 
-.tmp
+*.tmp
+*.temp

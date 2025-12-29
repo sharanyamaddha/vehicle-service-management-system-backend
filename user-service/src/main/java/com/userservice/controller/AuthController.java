@@ -3,12 +3,16 @@ package com.userservice.controller;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.userservice.requestdto.LoginRequest;
 import com.userservice.requestdto.RegisterRequest;
+import com.userservice.responsedto.LoginResponse;
 import com.userservice.service.UserService;
 
 @RestController
@@ -19,9 +23,22 @@ public class AuthController {
     private UserService userService;
     
     @PostMapping("/register")
-    public Map<String,String> register(@RequestBody RegisterRequest req){
-    	return Map.of("message",userService.register(req));
+    public ResponseEntity<String> register(@RequestBody RegisterRequest req){
+    	String message=userService.register(req);
+    	return ResponseEntity.status(HttpStatus.CREATED)
+    			.body(message);
     }
+    
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req) {
+
+        LoginResponse res = userService.login(req);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(res);
+    }
+    
     
     
     
