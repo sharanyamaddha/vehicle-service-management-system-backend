@@ -1,5 +1,7 @@
 package com.userservice.serviceImpl;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import com.userservice.repository.UserRepository;
 import com.userservice.requestdto.LoginRequest;
 import com.userservice.requestdto.RegisterRequest;
 import com.userservice.responsedto.LoginResponse;
+import com.userservice.responsedto.UserResponse;
 import com.userservice.service.UserService;
 
 @Service
@@ -54,7 +57,7 @@ public class UserServiceImpl implements UserService{
 	public LoginResponse login(LoginRequest req) {
 
 	    User user = userRepository.findByUsername(req.getUsername())
-	            .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+	            .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
 
 //	    if(!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
 //	        throw new InvalidCredentialsException("Invalid username or password");
@@ -66,7 +69,45 @@ public class UserServiceImpl implements UserService{
 	    return new LoginResponse(user.getId(),user.getUsername(),user.getEmail(), user.getRole().name());
 	}
 	
+	@Override
+	public List<UserResponse> getAllUsers(){
+		return userRepository.findAll().stream().map(this::mapToResponse).toList();
+	}
 	
+	 @Override
+	 public UserResponse getUserById(String userId) {
+		 return mapToResponse(userRepository.findById(userId).orElseThrow());
+
+	 }
+
+    @Override
+    public List<UserResponse> getPendingUsers() {
+        return userRepository.findByActiveFalse().stream().map(this::mapToResponse).toList();
+    }
+    
+    
+    @Override
+    public String approveUser(String id) {
+        User user = userRepository.findById(id).orElseThrow();
+        user.setActive(true);
+        userRepository.save(user);
+        return "User approved";
+    }
+    
+
 	
+	 private UserResponse mapToResponse(User user){
+	        UserResponse res = new UserResponse();
+	        res.setUsername(user.getUsername());
+	        res.setId(user.getId());
+	        res.setEmail(user.getEmail());
+	        res.setRole(user.getRole());
+	        res.setActive(user.isActive());
+	        return res;
+	    }
+
+
+
+
 	
 }
