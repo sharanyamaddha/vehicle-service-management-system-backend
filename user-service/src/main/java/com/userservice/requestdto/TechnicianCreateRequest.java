@@ -9,4 +9,5 @@ public class TechnicianCreateRequest {
     private String userId;
     private Specialization specialization;
     private boolean available;
+    private String managerId;
 }

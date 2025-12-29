@@ -23,14 +23,11 @@ public class TechnicianServiceImpl implements TechnicianService{
         tech.setUserId(req.getUserId());
         tech.setSpecialization(req.getSpecialization());
         tech.setAvailable(req.isAvailable());
+        tech.setManagerId(req.getManagerId());
 
         return mapToResponse(techRepository.save(tech));
     }
     
-    @Override
-    public List<TechnicianResponse> getAvailableTechnicians() {
-        return techRepository.findByAvailableTrue().stream().map(this::mapToResponse).toList();
-    }
 
     @Override
     public List<TechnicianResponse> getTechniciansByManager(String managerId) {

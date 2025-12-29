@@ -15,6 +15,8 @@ import com.userservice.requestdto.RegisterRequest;
 import com.userservice.responsedto.LoginResponse;
 import com.userservice.service.UserService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -23,14 +25,14 @@ public class AuthController {
     private UserService userService;
     
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest req){
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest req){
     	String message=userService.register(req);
     	return ResponseEntity.status(HttpStatus.CREATED)
     			.body(message);
     }
     
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
 
         LoginResponse res = userService.login(req);
 
