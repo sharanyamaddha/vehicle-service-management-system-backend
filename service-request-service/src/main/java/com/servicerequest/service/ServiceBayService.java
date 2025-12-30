@@ -13,4 +13,6 @@ public interface ServiceBayService {
     void occupyBay(String bayId);
     
     void releaseBay(String bayId);
+
+	ServiceBay getBay(String bayId);
 }

@@ -52,5 +52,13 @@ public class ServiceRequest {
 
     private List<UsedPart> usedParts = new ArrayList<>();
 
+    private PartsStatus partsStatus = PartsStatus.PARTS_NONE;
+
+    private String partsRequestedBy;   // technicianId
+    private String partsIssuedBy;      // managerId
+
+    private LocalDateTime partsRequestedAt;
+    private LocalDateTime partsIssuedAt;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }

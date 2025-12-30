@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.model.ServiceRequest;
+import com.servicerequest.model.UsedPart;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;
@@ -53,6 +55,20 @@ public class ServiceRequestController {
     public Map<String,String> status(@PathVariable String id,
                                      @Valid @RequestBody UpdateStatusDTO dto){
         return Map.of("message", service.updateStatus(id, dto));
+    }
+    
+    //Techncican requests parts
+    @PostMapping("/{id}/parts/request")
+    public Map<String,String> requestParts(@PathVariable String id,
+            @RequestBody List<UsedPart> parts){
+        return Map.of("message", service.requestParts(id, parts));
+    }
+
+    //Manager approves parts
+    @PatchMapping("/{id}/parts/approve")
+    public Map<String,String> approveParts(@PathVariable String id,
+            @RequestParam String managerId){
+        return Map.of("message", service.approveParts(id, managerId));
     }
     
     @GetMapping("/status/{status}")

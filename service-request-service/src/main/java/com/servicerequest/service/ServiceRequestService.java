@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.model.ServiceRequest;
+import com.servicerequest.model.UsedPart;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;
@@ -20,4 +21,9 @@ public interface ServiceRequestService {
     String updateStatus(String id, UpdateStatusDTO dto);
     
     List<ServiceRequest> getByStatus(ServiceStatus status);
+    
+    String requestParts(String requestId, List<UsedPart> parts);
+    
+    String approveParts(String requestId, String managerId);
+
 }

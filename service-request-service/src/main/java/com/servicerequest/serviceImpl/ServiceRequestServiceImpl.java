@@ -1,5 +1,6 @@
 package com.servicerequest.serviceImpl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.exceptions.RequestAlreadyAssignedException;
+import com.servicerequest.model.PartsStatus;
 import com.servicerequest.model.ServiceBay;
 import com.servicerequest.model.ServiceRequest;
 import com.servicerequest.repository.ServiceRequestRepository;
@@ -100,6 +102,45 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     	
     	return "Status updated";
     }
+    
+    @Override
+    public String requestParts(String requestId, List<UsedPart> parts) {
+
+        ServiceRequest sr = serviceReqRepo.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if(sr.getStatus() != ServiceStatus.IN_PROGRESS)
+            throw new RuntimeException("Parts can be requested only when service is IN_PROGRESS");
+
+        sr.setUsedParts(parts);
+        sr.setPartsStatus(PartsStatus.PARTS_REQUESTED);
+        sr.setPartsRequestedBy(sr.getTechnicianId());
+        sr.setPartsRequestedAt(LocalDateTime.now());
+
+        serviceReqRepo.save(sr);
+        return "Parts requested successfully";
+    }	
+    
+    @Override
+    public String approveParts(String requestId, String managerId) {
+
+        ServiceRequest sr = serviceReqRepo.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if(sr.getPartsStatus() != PartsStatus.PARTS_REQUESTED)
+            throw new RuntimeException("No pending parts request");
+
+        // later we will add inventory + billing calls here
+
+        sr.setPartsStatus(PartsStatus.PARTS_ISSUED);
+        sr.setPartsIssuedBy(managerId);
+        sr.setPartsIssuedAt(LocalDateTime.now());
+
+        serviceReqRepo.save(sr);
+        return "Parts approved and issued";
+    }
+
+
     
     @Override
     public List<ServiceRequest> getByStatus(ServiceStatus status){
