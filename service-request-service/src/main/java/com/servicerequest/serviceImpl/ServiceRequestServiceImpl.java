@@ -9,12 +9,14 @@ import org.springframework.stereotype.Service;
 
 import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.exceptions.RequestAlreadyAssignedException;
+import com.servicerequest.model.ServiceBay;
 import com.servicerequest.model.ServiceRequest;
 import com.servicerequest.repository.ServiceRequestRepository;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;
 import com.servicerequest.responsedto.ServiceRequestResponse;
+import com.servicerequest.service.ServiceBayService;
 import com.servicerequest.service.ServiceRequestService;
 
 @Service
@@ -22,6 +24,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
 	@Autowired
 	private ServiceRequestRepository serviceReqRepo;
+	
+	@Autowired
+	private ServiceBayService bayService;
 	
     @Override
     public ServiceRequestResponse createRequest(ServiceRequestCreateDTO dto) {
@@ -57,6 +62,13 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new RequestAlreadyAssignedException(
                 "This service request was already assigned by another manager."
             );
+        
+        ServiceBay bay=bayService.getBay(dto.getBayId());
+        
+        if (!bay.isAvailable())
+            throw new RuntimeException("This bay is already occupied.");
+        
+        bayService.occupyBay(dto.getBayId());
     	
     	sr.setTechnicianId(dto.getTechnicianId());
     	sr.setBayId(dto.getBayId());
@@ -65,6 +77,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     	try {
     		serviceReqRepo.save(sr);
     	}catch(OptimisticLockingFailureException e) {
+    		
+    		bayService.releaseBay(dto.getBayId());
+    		
             throw new RequestAlreadyAssignedException(
                     "This service request was already assigned by another manager."
                 );    	
