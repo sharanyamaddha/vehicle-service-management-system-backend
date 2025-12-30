@@ -6,12 +6,13 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import com.servicerequest.model.ServiceRequest;
+import com.servicerequest.model.ServiceStatus;
 
 @Repository
 public interface ServiceRequestRepository extends MongoRepository<ServiceRequest,String>{
 
 	List<ServiceRequest> findByCustomerId(String customerId);
 
-	long assignIfNotAssigned(String id, String technicianId, String bayId);
+	List<ServiceRequest> findByStatus(ServiceStatus status);
 
 }

@@ -4,11 +4,16 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
+import com.servicerequest.exceptions.RequestAlreadyAssignedException;
 import com.servicerequest.model.ServiceRequest;
+import com.servicerequest.model.ServiceStatus;
 import com.servicerequest.repository.ServiceRequestRepository;
+import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
+import com.servicerequest.requestdto.UpdateStatusDTO;
 import com.servicerequest.responsedto.ServiceRequestResponse;
 import com.servicerequest.service.ServiceRequestService;
 
@@ -39,5 +44,50 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     public List<ServiceRequest> getCustomerRequests(String customerId) {
         return serviceReqRepo.findByCustomerId(customerId);
+    }
+    
+    
+    @Override
+    public String assignTechnician(String id,AssignTechnicianDTO dto) {
+    	
+    	ServiceRequest sr=serviceReqRepo.findById(id)
+    	        .orElseThrow(() -> new RuntimeException("Request not found"));
+    	
+        if(sr.getStatus() != ServiceStatus.REQUESTED)
+            throw new RequestAlreadyAssignedException(
+                "This service request was already assigned by another manager."
+            );
+    	
+    	sr.setTechnicianId(dto.getTechnicianId());
+    	sr.setBayId(dto.getBayId());
+    	sr.setStatus(ServiceStatus.ASSIGNED);
+    	
+    	try {
+    		serviceReqRepo.save(sr);
+    	}catch(OptimisticLockingFailureException e) {
+            throw new RequestAlreadyAssignedException(
+                    "This service request was already assigned by another manager."
+                );    	
+        }
+
+    	return "Assigned successfully";
+
+    }
+    
+    @Override
+    public String updateStatus(String id,UpdateStatusDTO dto) {
+    	
+    	ServiceRequest sr=serviceReqRepo.findById(id)
+    			.orElseThrow(()-> new RuntimeException("Request not found"));
+    	
+    	sr.setStatus(dto.getStatus());
+    	serviceReqRepo.save(sr);
+    	
+    	return "Status updated";
+    }
+    
+    @Override
+    public List<ServiceRequest> getByStatus(ServiceStatus status){
+    	return serviceReqRepo.findByStatus(status);
     }
 }

@@ -15,13 +15,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.servicerequest.model.ServiceRequest;
+import com.servicerequest.model.ServiceStatus;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
+import com.servicerequest.requestdto.UpdateStatusDTO;
 import com.servicerequest.responsedto.ServiceRequestResponse;
 import com.servicerequest.service.ServiceRequestService;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/service-requests")
@@ -47,6 +48,18 @@ public class ServiceRequestController {
                                      @Valid @RequestBody AssignTechnicianDTO dto){
         return Map.of("message", service.assignTechnician(id, dto));
     }
+    
+    @PatchMapping("/{id}/status")
+    public Map<String,String> status(@PathVariable String id,
+                                     @Valid @RequestBody UpdateStatusDTO dto){
+        return Map.of("message", service.updateStatus(id, dto));
+    }
+    
+    @GetMapping("/status/{status}")
+    public List<ServiceRequest> getByStatus(@PathVariable ServiceStatus status){
+        return service.getByStatus(status);
+    }
+
     
     
 }

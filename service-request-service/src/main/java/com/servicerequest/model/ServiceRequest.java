@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import jakarta.validation.constraints.NotBlank;
@@ -41,6 +42,10 @@ public class ServiceRequest {
 
     @NotBlank
     private String issue;
+    
+    @Version
+    private Long version;
+
 
     private List<UsedPart> usedParts = new ArrayList<>();
 
