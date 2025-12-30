@@ -2,8 +2,8 @@ package com.servicerequest.service;
 
 import java.util.List;
 
+import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.model.ServiceRequest;
-import com.servicerequest.model.ServiceStatus;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;

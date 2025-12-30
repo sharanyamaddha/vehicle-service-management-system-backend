@@ -1,6 +1,6 @@
 package com.servicerequest.responsedto;
 
-import com.servicerequest.model.ServiceStatus;
+import com.servicerequest.enums.ServiceStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

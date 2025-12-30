@@ -1,6 +1,6 @@
 package com.servicerequest.requestdto;
 
-import com.servicerequest.model.Priority;
+import com.servicerequest.enums.Priority;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.model.ServiceRequest;
-import com.servicerequest.model.ServiceStatus;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;

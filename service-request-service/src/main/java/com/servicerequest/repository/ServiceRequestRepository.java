@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.model.ServiceRequest;
-import com.servicerequest.model.ServiceStatus;
 
 @Repository
 public interface ServiceRequestRepository extends MongoRepository<ServiceRequest,String>{

@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
+import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.exceptions.RequestAlreadyAssignedException;
 import com.servicerequest.model.ServiceRequest;
-import com.servicerequest.model.ServiceStatus;
 import com.servicerequest.repository.ServiceRequestRepository;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
