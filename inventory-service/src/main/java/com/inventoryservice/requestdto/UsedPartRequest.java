@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class UsedPartRequest {
+	
     @NotBlank(message = "Part ID is required")
     private String partId;
 

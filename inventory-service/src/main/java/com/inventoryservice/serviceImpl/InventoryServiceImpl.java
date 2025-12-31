@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.inventoryservice.model.InventoryPart;
 import com.inventoryservice.repository.InventoryRepository;
@@ -33,15 +34,22 @@ public class InventoryServiceImpl implements InventoryService{
         return inventoryRepo.findAll();
     }
     
+    @Transactional
     @Override
-    void deductStock(List<UserPartRequest> usedParts) {
-    	
-    	for(UsedPartRequest used :usedParts) {
-        	InventoryPart part=inventoryRepo.findById(used.getPartId())
-        			.orElseThrow(()->new RuntimeException("Part not found : "+used.getPartId()));
-        	
+    public void deductStock(List<UsedPartRequest> usedParts) {
 
-    	}
+        for (UsedPartRequest used : usedParts) {
+
+            InventoryPart part = inventoryRepo.findById(used.getPartId())
+                    .orElseThrow(() -> new RuntimeException("Part not found: " + used.getPartId()));
+
+            if (part.getStock() < used.getQty()) {
+                throw new RuntimeException("Insufficient stock for part: " + part.getName());
+            }
+
+            part.setStock(part.getStock() - used.getQty());
+            inventoryRepo.save(part);
+        }
     }
-	
+
 }
