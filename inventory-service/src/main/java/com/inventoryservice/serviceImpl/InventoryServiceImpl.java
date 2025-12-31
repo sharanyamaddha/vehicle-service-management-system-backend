@@ -51,5 +51,14 @@ public class InventoryServiceImpl implements InventoryService{
             inventoryRepo.save(part);
         }
     }
+    
+    @Override
+    public List<InventoryPart> getLowStockParts() {
+        return inventoryRepo.findAll()
+            .stream()
+            .filter(p -> p.getStock() <= p.getReorderLevel())
+            .toList();
+    }
+
 
 }

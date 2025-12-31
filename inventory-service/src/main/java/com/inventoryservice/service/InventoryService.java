@@ -13,4 +13,7 @@ public interface InventoryService {
     List<InventoryPart> getAllParts();
 
     void deductStock(List<UsedPartRequest> usedParts);
+    
+
+	List<InventoryPart> getLowStockParts();
 }

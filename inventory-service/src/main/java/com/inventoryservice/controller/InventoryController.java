@@ -38,4 +38,10 @@ public class InventoryController {
         inventoryService.deductStock(usedParts);
         return ResponseEntity.ok("Stock updated successfully");
     }
+    
+    @GetMapping("/alerts/low-stock")
+    public ResponseEntity<List<InventoryPart>> lowStockAlerts() {
+        return ResponseEntity.ok(inventoryService.getLowStockParts());
+    }
+
 }
