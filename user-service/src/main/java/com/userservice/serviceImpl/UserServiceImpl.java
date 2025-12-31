@@ -3,6 +3,7 @@ package com.userservice.serviceImpl;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 //import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +16,18 @@ import com.userservice.requestdto.LoginRequest;
 import com.userservice.requestdto.RegisterRequest;
 import com.userservice.responsedto.LoginResponse;
 import com.userservice.responsedto.UserResponse;
+import com.userservice.security.JwtUtil;
 import com.userservice.service.UserService;
 
 @Service
 public class UserServiceImpl implements UserService{
 
-    //private final PasswordEncoder passwordEncoder;
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private JwtUtil jwtUtil;
+
 	
 	@Autowired
 	private UserRepository userRepository;
@@ -37,7 +44,7 @@ public class UserServiceImpl implements UserService{
 		User user=new User();
 		user.setUsername(req.getUsername());
 	    user.setEmail(req.getEmail());
-	    //user.setPassword(passwordEncoder.encode(req.getPassword()));
+	    user.setPassword(passwordEncoder.encode(req.getPassword()));
 	    user.setRole(req.getRole());
 	    
 	    if(req.getRole() == Role.CUSTOMER){
@@ -59,14 +66,16 @@ public class UserServiceImpl implements UserService{
 	    User user = userRepository.findByUsername(req.getUsername())
 	            .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
 
-//	    if(!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-//	        throw new InvalidCredentialsException("Invalid username or password");
-//	    }
+	    if(!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
+	        throw new InvalidCredentialsException("Invalid username or password");
+	    }
 
 	    if(!user.isActive())
 	        throw new RuntimeException("Account pending admin approval");
+	    
+	    String token = jwtUtil.generateToken(user);
 
-	    return new LoginResponse(user.getId(),user.getUsername(),user.getEmail(), user.getRole().name());
+	    return new LoginResponse(token,user.getId(),user.getUsername(),user.getEmail(), user.getRole().name());
 	}
 	
 	@Override
