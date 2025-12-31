@@ -33,18 +33,7 @@ public class ServiceBayController {
     public ResponseEntity<List<ServiceBay>> available(){
         return ResponseEntity.ok(bayService.getAvailableBays());
     }
-    
-    @PatchMapping("/{id}/occupy")
-    public Map<String,String> occupy(@PathVariable String id){
-        bayService.occupyBay(id);
-        return Map.of("message","Bay occupied");
-    }
-    
-    @PatchMapping("/{id}/release")
-    public Map<String,String> release(@PathVariable String id){
-        bayService.releaseBay(id);
-        return Map.of("message","Bay released");
-    }
+
 
 
 }

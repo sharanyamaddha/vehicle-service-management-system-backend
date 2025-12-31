@@ -13,6 +13,7 @@ import com.servicerequest.exceptions.RequestAlreadyAssignedException;
 import com.servicerequest.model.PartsStatus;
 import com.servicerequest.model.ServiceBay;
 import com.servicerequest.model.ServiceRequest;
+import com.servicerequest.model.UsedPart;
 import com.servicerequest.repository.ServiceRequestRepository;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
@@ -99,6 +100,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     	
     	sr.setStatus(dto.getStatus());
     	serviceReqRepo.save(sr);
+    	if(dto.getStatus() == ServiceStatus.COMPLETED) {
+    	    bayService.releaseBay(sr.getBayId());
+    	}
     	
     	return "Status updated";
     }
@@ -109,8 +113,11 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         ServiceRequest sr = serviceReqRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
-        if(sr.getStatus() != ServiceStatus.IN_PROGRESS)
-            throw new RuntimeException("Parts can be requested only when service is IN_PROGRESS");
+        if(sr.getStatus() != ServiceStatus.ASSIGNED && sr.getStatus() != ServiceStatus.IN_PROGRESS)
+            throw new RuntimeException("Parts can be requested only after technician assignment");
+        
+        if(sr.getPartsStatus() == PartsStatus.PARTS_ISSUED)
+            throw new RuntimeException("Parts already issued. Cannot modify.");
 
         sr.setUsedParts(parts);
         sr.setPartsStatus(PartsStatus.PARTS_REQUESTED);

@@ -45,4 +45,12 @@ public class ServiceBayServiceImpl implements ServiceBayService{
     	bayRepo.save(bay);
     			
     }
+
+    @Override
+    public ServiceBay getBay(String bayId) {
+
+        return bayRepo.findById(bayId)
+                .orElseThrow(() -> new RuntimeException("Service bay not found: " + bayId));
+    }
+
 }
