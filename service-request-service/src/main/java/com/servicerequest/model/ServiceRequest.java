@@ -50,7 +50,7 @@ public class ServiceRequest {
     private Long version;
 
 
-    private List<UsedPart> usedParts = new ArrayList<>();
+    private List<UsedPartRequest> usedParts = new ArrayList<>();
 
     private PartsStatus partsStatus = PartsStatus.PARTS_NONE;
 

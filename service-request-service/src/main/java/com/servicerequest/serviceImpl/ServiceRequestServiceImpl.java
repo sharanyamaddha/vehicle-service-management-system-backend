@@ -8,12 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
+import com.servicerequest.FeignClient.BillingClient;
+import com.servicerequest.FeignClient.InventoryClient;
 import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.exceptions.RequestAlreadyAssignedException;
 import com.servicerequest.model.PartsStatus;
 import com.servicerequest.model.ServiceBay;
 import com.servicerequest.model.ServiceRequest;
-import com.servicerequest.model.UsedPart;
+import com.servicerequest.model.UsedPartRequest;
 import com.servicerequest.repository.ServiceRequestRepository;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestCreateDTO;
@@ -31,6 +33,12 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 	@Autowired
 	private ServiceBayService bayService;
 	
+	@Autowired
+	private InventoryClient inventoryClient;
+	
+	@Autowired
+	private BillingClient billingClient;
+
     @Override
     public ServiceRequestResponse createRequest(ServiceRequestCreateDTO dto) {
 
@@ -108,7 +116,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     }
     
     @Override
-    public String requestParts(String requestId, List<UsedPart> parts) {
+    public String requestParts(String requestId, List<UsedPartRequest> parts) {
 
         ServiceRequest sr = serviceReqRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
@@ -138,6 +146,10 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new RuntimeException("No pending parts request");
 
         // later we will add inventory + billing calls here
+        inventoryClient.deductStock(sr.getUsedParts());
+        billingClient.generateInvoice(sr.getId());
+
+
 
         sr.setPartsStatus(PartsStatus.PARTS_ISSUED);
         sr.setPartsIssuedBy(managerId);
