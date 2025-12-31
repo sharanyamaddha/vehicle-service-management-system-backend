@@ -1,6 +1,6 @@
 package com.userservice.requestdto;
 
-import com.userservice.model.Specialization;
+import com.userservice.model.enums.Specialization;
 
 import lombok.Data;
 

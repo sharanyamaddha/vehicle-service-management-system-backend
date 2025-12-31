@@ -1,6 +1,6 @@
 package com.userservice.requestdto;
 
-import com.userservice.model.Role;
+import com.userservice.model.enums.Role;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

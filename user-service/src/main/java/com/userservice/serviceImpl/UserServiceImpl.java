@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 import com.userservice.exceptions.EmailAlreadyExistsException;
 import com.userservice.exceptions.InvalidCredentialsException;
-import com.userservice.model.Role;
 import com.userservice.model.User;
+import com.userservice.model.enums.Role;
 import com.userservice.repository.UserRepository;
 import com.userservice.requestdto.LoginRequest;
 import com.userservice.requestdto.RegisterRequest;
