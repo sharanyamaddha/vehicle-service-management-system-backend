@@ -59,6 +59,13 @@ public class InventoryServiceImpl implements InventoryService{
             .filter(p -> p.getStock() <= p.getReorderLevel())
             .toList();
     }
+    
+    @Override
+    public InventoryPart getPartById(String id) {
+        return inventoryRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Part not found: " + id));
+    }
+
 
 
 }

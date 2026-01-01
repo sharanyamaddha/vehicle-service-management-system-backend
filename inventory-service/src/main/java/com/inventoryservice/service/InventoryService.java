@@ -11,6 +11,9 @@ public interface InventoryService {
     InventoryPart addPart(CreatePartRequest request);
 
     List<InventoryPart> getAllParts();
+    
+    InventoryPart getPartById(String id);
+
 
     void deductStock(List<UsedPartRequest> usedParts);
     
