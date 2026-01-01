@@ -12,4 +12,6 @@ public interface InvoiceRepository extends MongoRepository<Invoice, String>{
 
 	List<Invoice> findByCustomerId(String customerId);
 
+	boolean existsByServiceRequestId(String serviceRequestId);
+
 }

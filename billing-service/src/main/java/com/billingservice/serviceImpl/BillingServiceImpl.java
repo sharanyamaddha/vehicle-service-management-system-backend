@@ -27,26 +27,30 @@ public class BillingServiceImpl implements BillingService{
 	@Autowired
 	private ServiceRequestClient requestClient;
 	
-    @Override
-    public Invoice generateInvoice(String serviceRequestId) {
+	@Override
+	public Invoice generateInvoice(String serviceRequestId) {
 
-        ServiceRequestDTO sr = requestClient.getRequest(serviceRequestId);
+	    if(invoiceRepo.existsByServiceRequestId(serviceRequestId))
+	        throw new RuntimeException("Invoice already generated for this service");
 
-        double total = 0;
+	    ServiceRequestDTO sr = requestClient.getRequest(serviceRequestId);
 
-        for(UsedPartDTO part : sr.getUsedParts()){
-            InventoryPartDTO inv = inventoryClient.getPart(part.getPartId());
-            total += inv.getPrice() * part.getQty();
-        }
+	    double total = 0;
 
-        Invoice invoice = new Invoice();
-        invoice.setServiceRequestId(serviceRequestId);
-        invoice.setCustomerId(sr.getCustomerId());
-        invoice.setTotal(total);
-        invoice.setStatus("PENDING");
+	    for(UsedPartDTO part : sr.getUsedParts()){
+	        InventoryPartDTO inv = inventoryClient.getPart(part.getPartId());
+	        total += inv.getPrice() * part.getQty();
+	    }
 
-        return invoiceRepo.save(invoice);
-    }
+	    Invoice invoice = new Invoice();
+	    invoice.setServiceRequestId(serviceRequestId);
+	    invoice.setCustomerId(sr.getCustomerId());
+	    invoice.setTotal(total);
+	    invoice.setStatus("PENDING");
+
+	    return invoiceRepo.save(invoice);
+	}
+
     
     @Override
     public List<Invoice> getInvoicesByCustomer(String customerId) {
