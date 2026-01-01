@@ -10,5 +10,4 @@ public class TechnicianResponse {
     private String userId;
     private Specialization specialization;
     private boolean available;
-    private String managerId;
 }

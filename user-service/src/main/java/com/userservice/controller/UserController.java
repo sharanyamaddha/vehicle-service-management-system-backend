@@ -5,13 +5,10 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.userservice.responsedto.UserResponse;
+import com.userservice.requestdto.RegisterRequest;
 import com.userservice.service.UserService;
 
 @RestController
@@ -20,28 +17,38 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-    
 
+    // ADMIN – view all users
     @GetMapping
-    public ResponseEntity<List<UserResponse>> all(){ 
-    	return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<List<UserResponse>> all(){
+        return ResponseEntity.ok(userService.getAllUsers());
     }
     
-    @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable String id) {
-    	return ResponseEntity.ok(userService.getUserById(id));
+    @GetMapping("/role/{role}")
+    public ResponseEntity<List<UserResponse>> byRole(@PathVariable String role){
+        return ResponseEntity.ok(userService.getUsersByRole(role));
     }
 
-    @GetMapping("/pending")
-    public ResponseEntity<List<UserResponse>> pending(){ 
-    	return ResponseEntity.ok(userService.getPendingUsers()); 
+
+    // ADMIN – create MANAGER / TECHNICIAN
+    @PostMapping("/internal/create")
+    public ResponseEntity<Map<String,String>> createInternal(@RequestBody RegisterRequest req){
+        return ResponseEntity.ok(Map.of(
+            "message", userService.createInternalUser(req)
+        ));
     }
 
-    @PatchMapping("/{id}/approve")
-    public ResponseEntity<Map<String,String>> approve(@PathVariable String id){
-        userService.approveUser(id);
-        return ResponseEntity.ok(Map.of("message", "User approved successfully"));
+    // ADMIN – disable user
+    @PatchMapping("/{id}/disable")
+    public ResponseEntity<Map<String,String>> disable(@PathVariable String id){
+        userService.disableUser(id);
+        return ResponseEntity.ok(Map.of("message","User disabled"));
     }
 
-    
+    // ADMIN – enable user
+    @PatchMapping("/{id}/enable")
+    public ResponseEntity<Map<String,String>> enable(@PathVariable String id){
+        userService.enableUser(id);
+        return ResponseEntity.ok(Map.of("message","User enabled"));
+    }
 }

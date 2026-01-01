@@ -9,16 +9,17 @@ import com.userservice.responsedto.UserResponse;
 
 public interface UserService {
 
-	String register(RegisterRequest request);
-	
-	 LoginResponse login(LoginRequest request);
-	  
-	 List<UserResponse> getAllUsers();
+    String registerCustomer(RegisterRequest req);
 
-	    List<UserResponse> getPendingUsers();
+    String createInternalUser(RegisterRequest req);
 
-	    String approveUser(String userId);
+    LoginResponse login(LoginRequest req);
 
-	    UserResponse getUserById(String userId);
-	  
+    List<UserResponse> getAllUsers();
+    
+    List<UserResponse> getUsersByRole(String role);
+
+    void disableUser(String id);
+
+    void enableUser(String id);
 }

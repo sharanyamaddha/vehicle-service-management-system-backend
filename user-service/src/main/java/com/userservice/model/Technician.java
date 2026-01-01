@@ -22,7 +22,9 @@ public class Technician {
 	    private Specialization specialization;
 
 	    private boolean available;
+	    
+	    private int currentJobs = 0;
 
-	    @NotBlank(message = "ManagerId is required")
-	    private String managerId;
+
+
 }

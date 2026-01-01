@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.userservice.model.enums.Role;
 import com.userservice.requestdto.LoginRequest;
 import com.userservice.requestdto.RegisterRequest;
 import com.userservice.responsedto.LoginResponse;
@@ -26,9 +27,12 @@ public class AuthController {
     
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest req){
-    	String message=userService.register(req);
-    	return ResponseEntity.status(HttpStatus.CREATED)
-    			.body(message);
+
+        if(req.getRole() != Role.CUSTOMER)
+            throw new RuntimeException("Only customers can self-register");
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(userService.registerCustomer(req));
     }
     
     @PostMapping("/login")

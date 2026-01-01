@@ -5,42 +5,46 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.userservice.model.Technician;
 import com.userservice.requestdto.TechnicianCreateRequest;
 import com.userservice.responsedto.TechnicianResponse;
 import com.userservice.service.TechnicianService;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/technicians")
 public class TechnicianController {
 
-	@Autowired
+    @Autowired
     private TechnicianService techService;
-	
 
+    // ADMIN – assign specialization
     @PostMapping
-    public ResponseEntity<TechnicianResponse> create(@Valid @RequestBody TechnicianCreateRequest req){
+    public ResponseEntity<TechnicianResponse> create(@RequestBody TechnicianCreateRequest req){
         return ResponseEntity.status(HttpStatus.CREATED)
-        		.body(techService.createTechnician(req));
+                .body(techService.createTechnician(req));
     }
 
-
-    @GetMapping("/manager/{id}")
-    public ResponseEntity<List<TechnicianResponse>> byManager(@PathVariable String managerid){
-        return ResponseEntity.ok(techService.getTechniciansByManager(managerid));
-    }
-
+    // MANAGER – view available technicians
     @GetMapping("/status/{status}")
     public ResponseEntity<List<TechnicianResponse>> byStatus(@PathVariable boolean status){
         return ResponseEntity.ok(techService.getTechniciansByStatus(status));
     }
+    
+    @GetMapping("/specialization/{type}")
+    public ResponseEntity<List<TechnicianResponse>> bySpecialization(@PathVariable String Specialization){
+        return ResponseEntity.ok(techService.getAvailableBySpecialization(Specialization));
+    }
+
+    @PatchMapping("/technicians/{id}/increment")
+    public void incrementWorkload(@PathVariable String id){
+        techService.incrementWorkload(id);
+    }
+
+    @PatchMapping("/technicians/{id}/decrement")
+    public void decrementWorkload(@PathVariable String id){
+        techService.decrementWorkload(id);
+    }
+
+
 }

@@ -1,6 +1,6 @@
 package com.userservice.repository;
 
-import java.util.Collection;
+
 import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -13,8 +13,11 @@ import com.userservice.responsedto.TechnicianResponse;
 public interface TechnicianRepository extends MongoRepository<Technician,String>{
 
 	List<Technician> findByAvailableTrue();
-    List<Technician> findByManagerId(String managerId);
+    
     List<Technician> findByAvailable(boolean status);
+    
+    List<Technician> findBySpecializationAndAvailable(String specialization, boolean available);
+
 
 	
 }

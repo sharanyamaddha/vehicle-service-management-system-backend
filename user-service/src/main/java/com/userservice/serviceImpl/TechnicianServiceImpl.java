@@ -12,41 +12,63 @@ import com.userservice.responsedto.TechnicianResponse;
 import com.userservice.service.TechnicianService;
 
 @Service
-public class TechnicianServiceImpl implements TechnicianService{
-	
+public class TechnicianServiceImpl implements TechnicianService {
+
     @Autowired
     private TechnicianRepository techRepository;
 
     @Override
-    public TechnicianResponse createTechnician(TechnicianCreateRequest req) {
-        Technician tech = new Technician();
-        tech.setUserId(req.getUserId());
-        tech.setSpecialization(req.getSpecialization());
-        tech.setAvailable(req.isAvailable());
-        tech.setManagerId(req.getManagerId());
+    public TechnicianResponse createTechnician(TechnicianCreateRequest req){
 
-        return mapToResponse(techRepository.save(tech));
-    }
-    
+        Technician t = new Technician();
+        t.setUserId(req.getUserId());
+        t.setSpecialization(req.getSpecialization());
+        t.setAvailable(true);
 
-    @Override
-    public List<TechnicianResponse> getTechniciansByManager(String managerId) {
-        return techRepository.findByManagerId(managerId).stream().map(this::mapToResponse).toList();
+        return map(techRepository.save(t));
     }
 
     @Override
-    public List<TechnicianResponse> getTechniciansByStatus(boolean status) {
-        return techRepository.findByAvailable(status).stream().map(this::mapToResponse).toList();
+    public List<TechnicianResponse> getTechniciansByStatus(boolean status){
+        return techRepository.findByAvailable(status)
+                .stream().map(this::map).toList();
     }
     
-    
-    private TechnicianResponse mapToResponse(Technician t){
-        TechnicianResponse res = new TechnicianResponse();
-        res.setId(t.getId());
-        res.setUserId(t.getUserId());
-        res.setSpecialization(t.getSpecialization());
-        res.setAvailable(t.isAvailable());
-        res.setManagerId(t.getManagerId());
-        return res;
+    @Override
+    public List<TechnicianResponse> getAvailableBySpecialization(String Specialization){
+        return techRepository
+            .findBySpecializationAndAvailable(Specialization, true)
+            .stream().map(this::map).toList();
     }
+
+
+    private TechnicianResponse map(Technician t){
+        TechnicianResponse r = new TechnicianResponse();
+        r.setId(t.getId());
+        r.setUserId(t.getUserId());
+        r.setSpecialization(t.getSpecialization());
+        r.setAvailable(t.isAvailable());
+        return r;
+    }
+    
+    @Override
+    public void incrementWorkload(String techId) {
+
+        Technician tech = techRepository.findById(techId)
+            .orElseThrow(() -> new RuntimeException("Technician not found"));
+
+        tech.setCurrentJobs(tech.getCurrentJobs() + 1);
+        techRepository.save(tech);
+    }
+
+    @Override
+    public void decrementWorkload(String techId) {
+
+        Technician tech = techRepository.findById(techId)
+            .orElseThrow(() -> new RuntimeException("Technician not found"));
+
+        tech.setCurrentJobs(Math.max(0, tech.getCurrentJobs() - 1));
+        techRepository.save(tech);
+    }
+
 }
