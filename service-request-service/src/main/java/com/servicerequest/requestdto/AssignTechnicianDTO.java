@@ -9,6 +9,5 @@ public class AssignTechnicianDTO {
     @NotBlank
     private String technicianId;
 
-    @NotBlank
-    private String bayId;
+    private int bayNumber;
 }

@@ -8,6 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.servicerequest.enums.PartsStatus;
 import com.servicerequest.enums.Priority;
 import com.servicerequest.enums.ServiceStatus;
 
@@ -36,7 +37,7 @@ public class ServiceRequest {
 
     private String technicianId;
 
-    private String bayId;
+    private int bayNumber;
 
     @NotNull
     private Priority priority;

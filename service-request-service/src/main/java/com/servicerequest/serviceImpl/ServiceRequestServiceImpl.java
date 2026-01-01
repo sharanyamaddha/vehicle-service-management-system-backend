@@ -10,9 +10,10 @@ import org.springframework.stereotype.Service;
 
 import com.servicerequest.FeignClient.BillingClient;
 import com.servicerequest.FeignClient.InventoryClient;
+import com.servicerequest.FeignClient.UserClient;
+import com.servicerequest.enums.PartsStatus;
 import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.exceptions.RequestAlreadyAssignedException;
-import com.servicerequest.model.PartsStatus;
 import com.servicerequest.model.ServiceBay;
 import com.servicerequest.model.ServiceRequest;
 import com.servicerequest.model.UsedPartRequest;
@@ -38,6 +39,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 	
 	@Autowired
 	private BillingClient billingClient;
+	
+	@Autowired
+	private UserClient userClient;
 
     @Override
     public ServiceRequestResponse createRequest(ServiceRequestCreateDTO dto) {
@@ -74,22 +78,24 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
                 "This service request was already assigned by another manager."
             );
         
-        ServiceBay bay=bayService.getBay(dto.getBayId());
+        ServiceBay bay=bayService.findByBayNumber(dto.getBayNumber());
         
         if (!bay.isAvailable())
             throw new RuntimeException("This bay is already occupied.");
         
-        bayService.occupyBay(dto.getBayId());
+        bayService.occupyBay(bay.getBayNumber());
     	
     	sr.setTechnicianId(dto.getTechnicianId());
-    	sr.setBayId(dto.getBayId());
+    	sr.setBayNumber(dto.getBayNumber());
     	sr.setStatus(ServiceStatus.ASSIGNED);
     	
     	try {
     		serviceReqRepo.save(sr);
+    		userClient.increment(dto.getTechnicianId());
+
     	}catch(OptimisticLockingFailureException e) {
     		
-    		bayService.releaseBay(dto.getBayId());
+    		bayService.releaseBay(bay.getBayNumber());
     		
             throw new RequestAlreadyAssignedException(
                     "This service request was already assigned by another manager."
@@ -101,19 +107,41 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     }
     
     @Override
-    public String updateStatus(String id,UpdateStatusDTO dto) {
-    	
-    	ServiceRequest sr=serviceReqRepo.findById(id)
-    			.orElseThrow(()-> new RuntimeException("Request not found"));
-    	
-    	sr.setStatus(dto.getStatus());
-    	serviceReqRepo.save(sr);
-    	if(dto.getStatus() == ServiceStatus.COMPLETED) {
-    	    bayService.releaseBay(sr.getBayId());
-    	}
-    	
-    	return "Status updated";
+    public String updateStatus(String id, UpdateStatusDTO dto) {
+
+        ServiceRequest sr = serviceReqRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        ServiceStatus current = sr.getStatus();
+        ServiceStatus next = dto.getStatus();
+
+        // 🔒 Guard must be BEFORE status change
+        if(current == ServiceStatus.CLOSED)
+            throw new RuntimeException("Service already closed");
+
+        if(current == ServiceStatus.ASSIGNED && next != ServiceStatus.IN_PROGRESS)
+            throw new RuntimeException("Technician must start work first");
+
+        if(current == ServiceStatus.IN_PROGRESS && next != ServiceStatus.COMPLETED)
+            throw new RuntimeException("Technician must complete before closing");
+
+        if(current == ServiceStatus.COMPLETED && next != ServiceStatus.CLOSED)
+            throw new RuntimeException("Manager must close the service");
+
+        sr.setStatus(next);
+        serviceReqRepo.save(sr);
+
+        if(next == ServiceStatus.CLOSED){
+            inventoryClient.deductStock(sr.getUsedParts());
+            billingClient.generateInvoice(sr.getId());
+            bayService.releaseBay(sr.getBayNumber());
+            userClient.decrement(sr.getTechnicianId());
+        }
+
+        return "Status updated successfully";
     }
+
+
     
     @Override
     public String requestParts(String requestId, List<UsedPartRequest> parts) {
@@ -121,11 +149,11 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         ServiceRequest sr = serviceReqRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
-        if(sr.getStatus() != ServiceStatus.ASSIGNED && sr.getStatus() != ServiceStatus.IN_PROGRESS)
-            throw new RuntimeException("Parts can be requested only after technician assignment");
-        
-        if(sr.getPartsStatus() == PartsStatus.PARTS_ISSUED)
-            throw new RuntimeException("Parts already issued. Cannot modify.");
+        if(sr.getStatus() != ServiceStatus.IN_PROGRESS)
+            throw new RuntimeException("Parts can be requested only when work is in progress");
+
+        if(sr.getPartsStatus() == PartsStatus.PARTS_APPROVED)
+            throw new RuntimeException("Parts already approved");
 
         sr.setUsedParts(parts);
         sr.setPartsStatus(PartsStatus.PARTS_REQUESTED);
@@ -134,7 +162,8 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         serviceReqRepo.save(sr);
         return "Parts requested successfully";
-    }	
+    }
+	
     
     @Override
     public String approveParts(String requestId, String managerId) {
@@ -145,19 +174,14 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         if(sr.getPartsStatus() != PartsStatus.PARTS_REQUESTED)
             throw new RuntimeException("No pending parts request");
 
-        // later we will add inventory + billing calls here
-        inventoryClient.deductStock(sr.getUsedParts());
-        billingClient.generateInvoice(sr.getId());
-
-
-
-        sr.setPartsStatus(PartsStatus.PARTS_ISSUED);
+        sr.setPartsStatus(PartsStatus.PARTS_APPROVED);
         sr.setPartsIssuedBy(managerId);
         sr.setPartsIssuedAt(LocalDateTime.now());
 
         serviceReqRepo.save(sr);
-        return "Parts approved and issued";
+        return "Parts approved successfully";
     }
+
 
 
     
@@ -165,4 +189,22 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     public List<ServiceRequest> getByStatus(ServiceStatus status){
     	return serviceReqRepo.findByStatus(status);
     }
+    
+    
+    @Override
+    public List<ServiceRequest> getTechnicianRequests(String techId){
+        return serviceReqRepo.findByTechnicianId(techId);
+    }
+
+    @Override
+    public List<ServiceRequest> getAllRequests(){
+        return serviceReqRepo.findAll();
+    }
+
+    @Override
+    public ServiceRequest getById(String id){
+        return serviceReqRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Request not found"));
+    }
+
 }

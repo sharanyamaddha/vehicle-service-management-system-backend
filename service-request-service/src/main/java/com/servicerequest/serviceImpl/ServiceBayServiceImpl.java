@@ -26,8 +26,8 @@ public class ServiceBayServiceImpl implements ServiceBayService{
     }
 	
     @Override
-    public void occupyBay(String bayId) {
-    	ServiceBay bay=bayRepo.findById(bayId)
+    public void occupyBay(int bayNumber) {
+    	ServiceBay bay=bayRepo.findByBayNumber(bayNumber)
                 .orElseThrow(() -> new RuntimeException("Bay not found"));
 
     	if(!bay.isAvailable())
@@ -37,8 +37,8 @@ public class ServiceBayServiceImpl implements ServiceBayService{
     }
     
     @Override
-    public void releaseBay(String bayId) {
-    	ServiceBay bay=bayRepo.findById(bayId)
+    public void releaseBay(int bayNumber) {
+    	ServiceBay bay=bayRepo.findByBayNumber(bayNumber)
                 .orElseThrow(() -> new RuntimeException("Bay not found"));
 
     	bay.setAvailable(true);
@@ -47,10 +47,19 @@ public class ServiceBayServiceImpl implements ServiceBayService{
     }
 
     @Override
-    public ServiceBay getBay(String bayId) {
+    public ServiceBay findByBayNumber(int bayNumber) {
 
-        return bayRepo.findById(bayId)
-                .orElseThrow(() -> new RuntimeException("Service bay not found: " + bayId));
+        ServiceBay bay = bayRepo.findByBayNumber(bayNumber)
+                .orElseThrow(() -> new RuntimeException("Service bay not found with number: " + bayNumber));
+
+        if (!bay.isAvailable()) {
+            throw new RuntimeException("Service bay " + bayNumber + " is already occupied");
+        }
+
+        return bay;
     }
+
+
+
 
 }

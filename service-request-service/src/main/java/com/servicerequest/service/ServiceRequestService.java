@@ -25,5 +25,13 @@ public interface ServiceRequestService {
     String requestParts(String requestId, List<UsedPartRequest> parts);
     
     String approveParts(String requestId, String managerId);
+    
+    List<ServiceRequest> getTechnicianRequests(String techId);
+    
+    List<ServiceRequest> getAllRequests();
+    
+    ServiceRequest getById(String id);
+
+
 
 }

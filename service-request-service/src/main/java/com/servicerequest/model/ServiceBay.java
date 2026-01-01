@@ -11,6 +11,8 @@ public class ServiceBay {
 
     @Id
     private String id;
+    
+    private int bayNumber;
 
     private boolean available = true;
 }

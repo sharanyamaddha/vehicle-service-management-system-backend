@@ -10,9 +10,12 @@ public interface ServiceBayService {
 
     List<ServiceBay> getAvailableBays();
     
-    void occupyBay(String bayId);
+    void occupyBay(int bayNumber);
     
-    void releaseBay(String bayId);
+    void releaseBay(int bayNUmber);
 
-	ServiceBay getBay(String bayId);
+	//ServiceBay getBay(String bayId);
+
+
+	ServiceBay findByBayNumber(int bayNumber);
 }

@@ -77,5 +77,22 @@ public class ServiceRequestController {
     }
 
     
+ // MANAGER
+    @GetMapping("/manager")
+    public List<ServiceRequest> allRequests(){
+        return service.getAllRequests();
+    }
+
+    // TECHNICIAN
+    @GetMapping("/technician/{id}")
+    public List<ServiceRequest> technicianRequests(@PathVariable String id){
+        return service.getTechnicianRequests(id);
+    }
     
+    @GetMapping("/{id}")
+    public ServiceRequest getById(@PathVariable String id){
+        return service.getById(id);
+    }
+
+
 }
