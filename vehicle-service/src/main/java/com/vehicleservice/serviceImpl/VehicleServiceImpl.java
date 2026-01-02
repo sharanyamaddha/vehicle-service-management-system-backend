@@ -47,6 +47,28 @@ public class VehicleServiceImpl implements VehicleService{
         return "Vehicle deleted";
     }
     
+    @Override
+    public void updateVehicle(String id, VehicleRequest req) {
+
+        Vehicle vehicle = vehicleRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+
+        vehicle.setMake(req.getMake());
+        vehicle.setModel(req.getModel());
+        vehicle.setColor(req.getColor());
+        vehicle.setYear(req.getYear());
+        vehicle.setType(req.getType());
+
+        vehicleRepo.save(vehicle);
+    }
+
+    @Override
+    public VehicleResponse getVehicleById(String id){
+        Vehicle vehicle = vehicleRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+        return mapToResponse(vehicle);
+    }
+
     
     private VehicleResponse mapToResponse(Vehicle v){
         VehicleResponse r = new VehicleResponse();

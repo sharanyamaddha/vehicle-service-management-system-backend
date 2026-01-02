@@ -12,5 +12,10 @@ public interface VehicleService {
     List<VehicleResponse> getVehiclesByCustomer(String userId);
     
 
+    void updateVehicle(String id, VehicleRequest req);
+
     String deleteVehicle(String id);
+    
+    VehicleResponse getVehicleById(String id);
+
 }
