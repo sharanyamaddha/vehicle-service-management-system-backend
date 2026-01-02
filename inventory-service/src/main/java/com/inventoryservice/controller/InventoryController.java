@@ -17,6 +17,8 @@ import com.inventoryservice.requestdto.CreatePartRequest;
 import com.inventoryservice.requestdto.UsedPartRequest;
 import com.inventoryservice.service.InventoryService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/parts")
 public class InventoryController {
@@ -25,7 +27,7 @@ public class InventoryController {
 	private InventoryService inventoryService;
 	
 	@PostMapping
-	public ResponseEntity<InventoryPart> addPart(@RequestBody CreatePartRequest request) {
+	public ResponseEntity<InventoryPart> addPart(@Valid @RequestBody CreatePartRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.addPart(request));
     }
 	
