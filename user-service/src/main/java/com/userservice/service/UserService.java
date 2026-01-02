@@ -17,6 +17,9 @@ public interface UserService {
 
     List<UserResponse> getAllUsers();
     
+    UserResponse getUserById(String id);
+
+    
     List<UserResponse> getUsersByRole(String role);
 
     void disableUser(String id);

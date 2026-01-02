@@ -81,6 +81,16 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
+    public UserResponse getUserById(String id) {
+
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return map(user);
+    }
+
+    
+    @Override
     public List<UserResponse> getUsersByRole(String role) {
         return userRepository.findByRole(Role.valueOf(role))
                 .stream().map(this::map).toList();
