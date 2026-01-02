@@ -15,7 +15,6 @@ import com.servicerequest.FeignClient.InventoryClient;
 import com.servicerequest.FeignClient.UserClient;
 import com.servicerequest.enums.PartsStatus;
 import com.servicerequest.enums.ServiceStatus;
-import com.servicerequest.event.NotificationEvent;
 import com.servicerequest.exceptions.RequestAlreadyAssignedException;
 import com.servicerequest.messaging.NotificationConstants;
 import com.servicerequest.model.ServiceBay;
@@ -66,9 +65,15 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         String customerEmail = userClient.getUser(sr.getCustomerId()).getEmail();
 
-        publishEvent("SERVICE_BOOKED",
-        	    "Your service request has been booked successfully",
-        	    customerEmail);
+        Map<String, Object> data = new HashMap<>();
+        data.put("requestNumber", sr.getRequestNumber());
+        data.put("vehicleId", sr.getVehicleId());
+        data.put("issue", sr.getIssue());
+        data.put("priority", sr.getPriority());
+        data.put("status", sr.getStatus());
+
+        publishNotification("SERVICE_BOOKED", customerEmail, data);
+
 
         return new ServiceRequestResponse(saved.getId(),
                                           saved.getRequestNumber(),
@@ -95,9 +100,14 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         
         String customerEmail = userClient.getUser(sr.getCustomerId()).getEmail();
 
-        publishEvent("SERVICE_ASSIGNED",
-        	    "Your vehicle has been assigned to technician",
-        	    customerEmail);
+        Map<String, Object> data = new HashMap<>();
+        data.put("requestNumber", sr.getRequestNumber());
+        data.put("vehicleId", sr.getVehicleId());
+        data.put("technicianId", dto.getTechnicianId());
+        data.put("bayNumber", dto.getBayNumber());
+        data.put("status", ServiceStatus.ASSIGNED);
+
+        publishNotification("SERVICE_ASSIGNED", customerEmail, data);
 
         ServiceBay bay=bayService.findByBayNumber(dto.getBayNumber());
         
@@ -156,6 +166,15 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             inventoryClient.deductStock(sr.getUsedParts());
 
             billingService.generateInvoice(sr.getId());
+            String email = userClient.getUser(sr.getCustomerId()).getEmail();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("requestNumber", sr.getRequestNumber());
+            data.put("vehicleId", sr.getVehicleId());
+            data.put("totalParts", sr.getUsedParts().size());
+
+            publishNotification("INVOICE_GENERATED", email, data);
+
             bayService.releaseBay(sr.getBayNumber());
             userClient.decrement(sr.getTechnicianId());
         }
@@ -229,21 +248,21 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             .orElseThrow(() -> new RuntimeException("Request not found"));
     }
     
-    private void publishEvent(String type, String message, String email) {
+    private void publishNotification(String type, String email, Map<String, Object> data) {
 
-        NotificationEvent event = new NotificationEvent();
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", type);
-        payload.put("message", message);
         payload.put("email", email);
-
+        payload.put("data", data);
 
         rabbitTemplate.convertAndSend(
                 NotificationConstants.EXCHANGE,
                 NotificationConstants.ROUTING_KEY,
-                event
+                payload
         );
     }
+
+
 
 
 
