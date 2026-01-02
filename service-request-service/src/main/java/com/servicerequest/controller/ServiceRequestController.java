@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.model.ServiceRequest;
-import com.servicerequest.model.UsedPartRequest;
+import com.servicerequest.model.UsedPart;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
-import com.servicerequest.requestdto.ServiceRequestCreateDTO;
+import com.servicerequest.requestdto.ServiceRequestDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;
 import com.servicerequest.responsedto.ServiceRequestResponse;
 import com.servicerequest.service.ServiceRequestService;
@@ -36,7 +36,7 @@ public class ServiceRequestController {
 
     @PostMapping
     public ResponseEntity<ServiceRequestResponse> create(
-            @Valid @RequestBody ServiceRequestCreateDTO dto){
+            @Valid @RequestBody ServiceRequestDTO dto){
         return ResponseEntity.status(HttpStatus.CREATED).body(service.createRequest(dto));
     }
     
@@ -60,7 +60,7 @@ public class ServiceRequestController {
     //Techncican requests parts
     @PostMapping("/{id}/parts/request")
     public Map<String,String> requestParts(@PathVariable String id,
-            @RequestBody List<UsedPartRequest> parts){
+            @RequestBody List<UsedPart> parts){
         return Map.of("message", service.requestParts(id, parts));
     }
 

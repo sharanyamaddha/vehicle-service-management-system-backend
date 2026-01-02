@@ -1,12 +1,13 @@
 package com.servicerequest.FeignClient;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import com.servicerequest.config.FeignHttpConfig;
+import com.servicerequest.responsedto.UserResponse;
 
-@FeignClient(name="user-service",configuration = FeignHttpConfig.class
+@FeignClient(name="user-service"
 )
 public interface UserClient {
 
@@ -15,5 +16,9 @@ public interface UserClient {
 
     @PatchMapping("/api/users/technicians/{id}/decrement")
     void decrement(@PathVariable String id);
+    
+
+    @GetMapping("/api/users/{id}")
+    UserResponse getUser(@PathVariable String id);
 }
 

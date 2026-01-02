@@ -4,15 +4,15 @@ import java.util.List;
 
 import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.model.ServiceRequest;
-import com.servicerequest.model.UsedPartRequest;
+import com.servicerequest.model.UsedPart;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
-import com.servicerequest.requestdto.ServiceRequestCreateDTO;
+import com.servicerequest.requestdto.ServiceRequestDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;
 import com.servicerequest.responsedto.ServiceRequestResponse;
 
 public interface ServiceRequestService {
 
-    ServiceRequestResponse createRequest(ServiceRequestCreateDTO dto);
+    ServiceRequestResponse createRequest(ServiceRequestDTO dto);
     
     List<ServiceRequest> getCustomerRequests(String customerId);
     
@@ -22,7 +22,7 @@ public interface ServiceRequestService {
     
     List<ServiceRequest> getByStatus(ServiceStatus status);
     
-    String requestParts(String requestId, List<UsedPartRequest> parts);
+    String requestParts(String requestId, List<UsedPart> parts);
     
     String approveParts(String requestId, String managerId);
     

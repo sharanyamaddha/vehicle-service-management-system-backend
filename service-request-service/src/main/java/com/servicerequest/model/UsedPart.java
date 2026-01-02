@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UsedPartRequest {
+public class UsedPart {
 
     @NotBlank
     private String partId;

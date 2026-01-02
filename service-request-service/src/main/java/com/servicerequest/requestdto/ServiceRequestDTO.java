@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class ServiceRequestCreateDTO {
+public class ServiceRequestDTO {
 
     @NotBlank
     private String vehicleId;

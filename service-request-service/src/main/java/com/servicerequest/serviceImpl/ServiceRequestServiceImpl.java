@@ -1,27 +1,32 @@
 package com.servicerequest.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
-import com.servicerequest.FeignClient.BillingClient;
 import com.servicerequest.FeignClient.InventoryClient;
 import com.servicerequest.FeignClient.UserClient;
 import com.servicerequest.enums.PartsStatus;
 import com.servicerequest.enums.ServiceStatus;
+import com.servicerequest.event.NotificationEvent;
 import com.servicerequest.exceptions.RequestAlreadyAssignedException;
+import com.servicerequest.messaging.NotificationConstants;
 import com.servicerequest.model.ServiceBay;
 import com.servicerequest.model.ServiceRequest;
-import com.servicerequest.model.UsedPartRequest;
+import com.servicerequest.model.UsedPart;
 import com.servicerequest.repository.ServiceRequestRepository;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
-import com.servicerequest.requestdto.ServiceRequestCreateDTO;
+import com.servicerequest.requestdto.ServiceRequestDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;
 import com.servicerequest.responsedto.ServiceRequestResponse;
+import com.servicerequest.service.BillingService;
 import com.servicerequest.service.ServiceBayService;
 import com.servicerequest.service.ServiceRequestService;
 
@@ -38,13 +43,17 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 	private InventoryClient inventoryClient;
 	
 	@Autowired
-	private BillingClient billingClient;
+	private BillingService billingService;
 	
 	@Autowired
 	private UserClient userClient;
+	
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
 
+	
     @Override
-    public ServiceRequestResponse createRequest(ServiceRequestCreateDTO dto) {
+    public ServiceRequestResponse createRequest(ServiceRequestDTO dto) {
 
         ServiceRequest sr = new ServiceRequest();
         sr.setRequestNumber("SR-" + UUID.randomUUID().toString().substring(0,6));
@@ -54,6 +63,12 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         sr.setIssue(dto.getIssue());
 
         ServiceRequest saved = serviceReqRepo.save(sr);
+
+        String customerEmail = userClient.getUser(sr.getCustomerId()).getEmail();
+
+        publishEvent("SERVICE_BOOKED",
+        	    "Your service request has been booked successfully",
+        	    customerEmail);
 
         return new ServiceRequestResponse(saved.getId(),
                                           saved.getRequestNumber(),
@@ -78,6 +93,12 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
                 "This service request was already assigned by another manager."
             );
         
+        String customerEmail = userClient.getUser(sr.getCustomerId()).getEmail();
+
+        publishEvent("SERVICE_ASSIGNED",
+        	    "Your vehicle has been assigned to technician",
+        	    customerEmail);
+
         ServiceBay bay=bayService.findByBayNumber(dto.getBayNumber());
         
         if (!bay.isAvailable())
@@ -115,7 +136,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         ServiceStatus current = sr.getStatus();
         ServiceStatus next = dto.getStatus();
 
-        // 🔒 Guard must be BEFORE status change
+        // Guard must be BEFORE status change
         if(current == ServiceStatus.CLOSED)
             throw new RuntimeException("Service already closed");
 
@@ -133,7 +154,8 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
         if(next == ServiceStatus.CLOSED){
             inventoryClient.deductStock(sr.getUsedParts());
-            billingClient.generateInvoice(sr.getId());
+
+            billingService.generateInvoice(sr.getId());
             bayService.releaseBay(sr.getBayNumber());
             userClient.decrement(sr.getTechnicianId());
         }
@@ -144,7 +166,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
     
     @Override
-    public String requestParts(String requestId, List<UsedPartRequest> parts) {
+    public String requestParts(String requestId, List<UsedPart> parts) {
 
         ServiceRequest sr = serviceReqRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
@@ -206,5 +228,23 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         return serviceReqRepo.findById(id)
             .orElseThrow(() -> new RuntimeException("Request not found"));
     }
+    
+    private void publishEvent(String type, String message, String email) {
+
+        NotificationEvent event = new NotificationEvent();
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", type);
+        payload.put("message", message);
+        payload.put("email", email);
+
+
+        rabbitTemplate.convertAndSend(
+                NotificationConstants.EXCHANGE,
+                NotificationConstants.ROUTING_KEY,
+                event
+        );
+    }
+
+
 
 }
