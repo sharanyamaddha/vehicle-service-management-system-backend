@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.userservice.model.enums.Specialization;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.Data;
 @Document(collection="technicians")
 @Data
 public class Technician {
+	
 	   @Id
 	    private String id;
 
@@ -23,6 +25,7 @@ public class Technician {
 
 	    private boolean available;
 	    
+	    @Min(value = 0, message = "Current jobs cannot be negative")
 	    private int currentJobs = 0;
 
 

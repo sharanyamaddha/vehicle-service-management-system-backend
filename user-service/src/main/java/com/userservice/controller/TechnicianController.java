@@ -11,6 +11,8 @@ import com.userservice.requestdto.TechnicianCreateRequest;
 import com.userservice.responsedto.TechnicianResponse;
 import com.userservice.service.TechnicianService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/technicians")
 public class TechnicianController {
@@ -20,7 +22,7 @@ public class TechnicianController {
 
     // ADMIN – assign specialization
     @PostMapping
-    public ResponseEntity<TechnicianResponse> create(@RequestBody TechnicianCreateRequest req){
+    public ResponseEntity<TechnicianResponse> create(@Valid @RequestBody TechnicianCreateRequest req){
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(techService.createTechnician(req));
     }

@@ -11,8 +11,10 @@ import com.userservice.exceptions.InvalidCredentialsException;
 import com.userservice.model.User;
 import com.userservice.model.enums.Role;
 import com.userservice.repository.UserRepository;
+import com.userservice.requestdto.ChangePasswordRequest;
 import com.userservice.requestdto.LoginRequest;
 import com.userservice.requestdto.RegisterRequest;
+import com.userservice.requestdto.UpdateProfileRequest;
 import com.userservice.responsedto.LoginResponse;
 import com.userservice.responsedto.UserResponse;
 import com.userservice.security.JwtUtil;
@@ -110,6 +112,45 @@ public class UserServiceImpl implements UserService {
         u.setActive(true);
         userRepository.save(u);
     }
+    
+    @Override
+    public List<UserResponse> getDisabledUsers(){
+        return userRepository.findByActiveFalse()
+                .stream().map(this::map).toList();
+    }
+
+
+    @Override
+    public UserResponse getMyProfile(String token){
+        User user = extractUserFromToken(token);
+        return map(user);
+    }
+
+    @Override
+    public void updateMyProfile(String token, UpdateProfileRequest req){
+        User user = extractUserFromToken(token);
+        user.setUsername(req.getUsername());
+        userRepository.save(user);
+    }
+
+    @Override
+    public void changeMyPassword(String token, ChangePasswordRequest req){
+        User user = extractUserFromToken(token);
+        if(!passwordEncoder.matches(req.getOldPassword(), user.getPassword()))
+            throw new RuntimeException("Old password wrong");
+        user.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        userRepository.save(user);
+    }
+    
+    @Override
+    public void resetPassword(String id){
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setPassword(passwordEncoder.encode("Welcome@123"));
+        userRepository.save(user);
+    }
+
+    
 
     private UserResponse map(User u){
         UserResponse r = new UserResponse();
@@ -120,4 +161,23 @@ public class UserServiceImpl implements UserService {
         r.setActive(u.isActive());
         return r;
     }
+    
+    private User extractUserFromToken(String authHeader) {
+
+        if(authHeader == null || !authHeader.startsWith("Bearer "))
+            throw new RuntimeException("Missing or invalid Authorization header");
+
+        String token = authHeader.substring(7);
+
+        String email = jwtUtil.extractUsername(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if(!user.isActive())
+            throw new RuntimeException("User account is disabled");
+
+        return user;
+    }
+
 }
