@@ -10,5 +10,10 @@ public interface BillingService {
     Invoice generateInvoice(String serviceRequestId);
     List<Invoice> getInvoicesByCustomer(String customerId);
 
-    //String markAsPaid(String invoiceId);
+    void payInvoice(String id);
+
+    Invoice getInvoiceById(String id);
+
+    List<Invoice> getAllInvoices();
+
 }

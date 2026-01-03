@@ -76,6 +76,31 @@ public class BillingServiceImpl implements BillingService {
     public List<Invoice> getInvoicesByCustomer(String customerId) {
         return invoiceRepo.findByCustomerId(customerId);
     }
+    
+    @Override
+    public void payInvoice(String id){
+
+        Invoice invoice = invoiceRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+        if(invoice.getStatus() == InvoiceStatus.PAID)
+            throw new RuntimeException("Invoice already paid");
+
+        invoice.setStatus(InvoiceStatus.PAID);
+        invoiceRepo.save(invoice);
+    }
+
+    @Override
+    public Invoice getInvoiceById(String id){
+        return invoiceRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+    }
+
+    @Override
+    public List<Invoice> getAllInvoices(){
+        return invoiceRepo.findAll();
+    }
+
 
     private void publishEvent(String type, String message, String email) {
 

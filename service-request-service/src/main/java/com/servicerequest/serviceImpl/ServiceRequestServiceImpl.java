@@ -143,44 +143,18 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         ServiceRequest sr = serviceReqRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
-        ServiceStatus current = sr.getStatus();
-        ServiceStatus next = dto.getStatus();
+        if(sr.getStatus() != ServiceStatus.IN_PROGRESS)
+            throw new RuntimeException("Service must be in progress to mark completed");
 
-        // Guard must be BEFORE status change
-        if(current == ServiceStatus.CLOSED)
-            throw new RuntimeException("Service already closed");
+        if(dto.getStatus() != ServiceStatus.COMPLETED)
+            throw new RuntimeException("Only COMPLETED status allowed here");
 
-        if(current == ServiceStatus.ASSIGNED && next != ServiceStatus.IN_PROGRESS)
-            throw new RuntimeException("Technician must start work first");
-
-        if(current == ServiceStatus.IN_PROGRESS && next != ServiceStatus.COMPLETED)
-            throw new RuntimeException("Technician must complete before closing");
-
-        if(current == ServiceStatus.COMPLETED && next != ServiceStatus.CLOSED)
-            throw new RuntimeException("Manager must close the service");
-
-        sr.setStatus(next);
+        sr.setStatus(ServiceStatus.COMPLETED);
         serviceReqRepo.save(sr);
 
-        if(next == ServiceStatus.CLOSED){
-            inventoryClient.deductStock(sr.getUsedParts());
-
-            billingService.generateInvoice(sr.getId());
-            String email = userClient.getUser(sr.getCustomerId()).getEmail();
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("requestNumber", sr.getRequestNumber());
-            data.put("vehicleId", sr.getVehicleId());
-            data.put("totalParts", sr.getUsedParts().size());
-
-            publishNotification("INVOICE_GENERATED", email, data);
-
-            bayService.releaseBay(sr.getBayNumber());
-            userClient.decrement(sr.getTechnicianId());
-        }
-
-        return "Status updated successfully";
+        return "Service marked as completed";
     }
+
 
 
     
@@ -224,6 +198,41 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     }
 
 
+    @Override
+    public String startJob(String id){
+
+        ServiceRequest sr = serviceReqRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if(sr.getStatus() != ServiceStatus.ASSIGNED)
+            throw new RuntimeException("Job can be started only after assignment");
+
+        sr.setStatus(ServiceStatus.IN_PROGRESS);
+        serviceReqRepo.save(sr);
+
+        return "Job started successfully";
+    }
+
+    @Override
+    public String closeRequest(String id){
+
+        ServiceRequest sr = serviceReqRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if(sr.getStatus() != ServiceStatus.COMPLETED)
+            throw new RuntimeException("Service must be completed before closing");
+
+        sr.setStatus(ServiceStatus.CLOSED);
+        serviceReqRepo.save(sr);
+
+        // existing CLOSE logic
+        inventoryClient.deductStock(sr.getUsedParts());
+        billingService.generateInvoice(sr.getId());
+        bayService.releaseBay(sr.getBayNumber());
+        userClient.decrement(sr.getTechnicianId());
+
+        return "Service closed successfully";
+    }
 
     
     @Override

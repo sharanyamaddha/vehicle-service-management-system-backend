@@ -9,16 +9,18 @@ import lombok.Data;
 @Data
 public class ServiceRequestDTO {
 
-    @NotBlank
+    @NotBlank(message = "Vehicle ID is required")
     private String vehicleId;
 
-    @NotBlank
+    @NotBlank(message = "Customer ID is required")
     private String customerId;
 
-    @NotNull
+
+    @NotNull(message = "Priority is required")
     private Priority priority;
 
-    @NotBlank
+
+    @NotBlank(message = "Issue description is required")
     private String issue;
 }
 

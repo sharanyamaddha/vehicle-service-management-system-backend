@@ -51,11 +51,19 @@ public class ServiceRequestController {
         return Map.of("message", service.assignTechnician(id, dto));
     }
     
+    @PatchMapping("/{id}/start")
+    public ResponseEntity<Map<String,String>> startJob(@PathVariable String id){
+        return ResponseEntity.ok(Map.of("message", service.startJob(id)));
+    }
+    
     @PatchMapping("/{id}/status")
     public Map<String,String> status(@PathVariable String id,
                                      @Valid @RequestBody UpdateStatusDTO dto){
         return Map.of("message", service.updateStatus(id, dto));
     }
+    
+
+
     
     //Techncican requests parts
     @PostMapping("/{id}/parts/request")
@@ -89,6 +97,11 @@ public class ServiceRequestController {
         return service.getTechnicianRequests(id);
     }
     
+    @PatchMapping("/{id}/close")
+    public ResponseEntity<Map<String,String>> closeRequest(@PathVariable String id){
+        return ResponseEntity.ok(Map.of("message", service.closeRequest(id)));
+    }
+
     @GetMapping("/{id}")
     public ServiceRequest getById(@PathVariable String id){
         return service.getById(id);

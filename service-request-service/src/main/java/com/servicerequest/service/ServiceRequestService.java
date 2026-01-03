@@ -18,6 +18,9 @@ public interface ServiceRequestService {
     
     String assignTechnician(String id, AssignTechnicianDTO dto);
     
+    String startJob(String id);
+
+    
     String updateStatus(String id, UpdateStatusDTO dto);
     
     List<ServiceRequest> getByStatus(ServiceStatus status);
@@ -27,6 +30,9 @@ public interface ServiceRequestService {
     String approveParts(String requestId, String managerId);
     
     List<ServiceRequest> getTechnicianRequests(String techId);
+    
+    String closeRequest(String id);
+
     
     List<ServiceRequest> getAllRequests();
     

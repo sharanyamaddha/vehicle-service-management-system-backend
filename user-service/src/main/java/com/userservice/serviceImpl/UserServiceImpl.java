@@ -74,7 +74,9 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Account disabled");
 
         String token = jwtUtil.generateToken(user);
-        return new LoginResponse(token,user.getId(),user.getUsername(),user.getEmail(),user.getRole().name());
+        return new LoginResponse(token,user.getId()
+        		//user.getUsername(),user.getEmail(),user.getRole().name()
+        		);
     }
 
     @Override
