@@ -48,34 +48,48 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
 
             String role = claims.get("role", String.class);
 
-            if ("ADMIN".equals(role)) return true;
+         // ADMIN – full access
+         if ("ADMIN".equals(role)) return true;
 
-            if ("MANAGER".equals(role)) {
-                if (path.contains("/assign") ||
-                    path.contains("/parts/approve") ||
-                    path.startsWith("/api/bays") ||
-                    path.contains("/api/service-requests/manager") ||
-                    (path.contains("/status") && path.contains("CLOSED")))
-                    return true;
-            }
+         // MANAGER permissions
+         if ("MANAGER".equals(role)) {
+             if (
+                 path.contains("/assign") ||
+                 path.contains("/parts/approve") ||
+                 path.contains("/close") ||
+                 path.startsWith("/api/service-requests/manager") ||
+                 path.startsWith("/api/technicians") ||
+                 path.startsWith("/api/parts") ||
+                 path.startsWith("/api/bays") ||
+                 path.startsWith("/api/invoices")
+             ) return true;
+         }
 
-            if ("TECHNICIAN".equals(role)) {
-                if (path.contains("/status") ||
-                	path.contains("/service-requests/technician") ||
-                    path.contains("/parts/request"))
-                    return true;
-            }
+         // TECHNICIAN permissions
+         if ("TECHNICIAN".equals(role)) {
+             if (
+                 path.contains("/start") ||
+                 path.contains("/status") ||
+                 path.contains("/parts/request") ||
+                 path.startsWith("/api/service-requests/technician")
+             ) return true;
+         }
 
-            if ("CUSTOMER".equals(role)) {
-                if (path.equals("/api/service-requests") ||
-                    path.startsWith("/api/service-requests/customer") ||
-                    path.startsWith("/api/vehicles") ||
-                    path.startsWith("/api/invoices/customer"))
-                    return true;
-            }
+         // CUSTOMER permissions
+         if ("CUSTOMER".equals(role)) {
+             if (
+                 path.equals("/api/service-requests") ||
+                 path.startsWith("/api/service-requests/customer") ||
+                 path.startsWith("/api/vehicles") ||
+                 path.startsWith("/api/invoices/customer") ||
+                 path.startsWith("/api/users/me") ||
+                 path.contains("/api/invoices") && path.contains("/pay")
 
-            response.setStatus(403);
-            return false;
+             ) return true;
+         }
+
+         response.setStatus(403);
+         return false;
 
         } catch (Exception e) {
             response.setStatus(401);
