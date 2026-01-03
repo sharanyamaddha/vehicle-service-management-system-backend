@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.inventoryservice.model.InventoryPart;
 import com.inventoryservice.repository.InventoryRepository;
 import com.inventoryservice.requestdto.CreatePartRequest;
+import com.inventoryservice.requestdto.UpdatePartRequest;
 import com.inventoryservice.requestdto.UsedPartRequest;
 import com.inventoryservice.service.InventoryService;
 
@@ -34,6 +35,26 @@ public class InventoryServiceImpl implements InventoryService{
         return inventoryRepo.findAll();
     }
     
+    @Override
+    public InventoryPart getPartById(String id) {
+        return inventoryRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Part not found: " + id));
+    }
+
+    
+    @Override
+    public void updatePart(String id, UpdatePartRequest req){
+
+        InventoryPart part = inventoryRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Part not found"));
+
+        part.setName(req.getName());
+        part.setPrice(req.getPrice());
+        part.setReorderLevel(req.getReorderLevel());
+
+        inventoryRepo.save(part);
+    }
+
     @Transactional
     @Override
     public void deductStock(List<UsedPartRequest> usedParts) {
@@ -60,11 +81,6 @@ public class InventoryServiceImpl implements InventoryService{
             .toList();
     }
     
-    @Override
-    public InventoryPart getPartById(String id) {
-        return inventoryRepo.findById(id)
-            .orElseThrow(() -> new RuntimeException("Part not found: " + id));
-    }
 
 
 
