@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 public class CreatePartRequest {
-	
+
     @NotBlank(message = "Part name is required")
     private String name;
 
@@ -18,4 +18,9 @@ public class CreatePartRequest {
 
     @Min(value = 1, message = "Reorder level must be at least 1")
     private int reorderLevel;
+
+    private String category;
+    private String unitType;
+    private String supplier;
+    private String description;
 }

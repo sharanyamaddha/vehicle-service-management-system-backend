@@ -24,42 +24,59 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/parts")
 public class InventoryController {
-	
-	@Autowired
-	private InventoryService inventoryService;
-	
-	@PostMapping
-	public ResponseEntity<InventoryPart> addPart(@Valid @RequestBody CreatePartRequest request) {
+
+    @Autowired
+    private InventoryService inventoryService;
+
+    @PostMapping
+    public ResponseEntity<InventoryPart> addPart(@Valid @RequestBody CreatePartRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.addPart(request));
     }
-	
+
     @GetMapping
     public ResponseEntity<List<InventoryPart>> getAllParts() {
         return ResponseEntity.ok(inventoryService.getAllParts());
     }
-    
+
     @GetMapping("/{id}")
     public InventoryPart getPartById(@PathVariable String id) {
         return inventoryService.getPartById(id);
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<String> updatePart(@PathVariable String id,
-                                             @Valid @RequestBody UpdatePartRequest req){
+            @Valid @RequestBody UpdatePartRequest req) {
         inventoryService.updatePart(id, req);
         return ResponseEntity.ok("Part updated successfully");
     }
 
-
     @PostMapping("/deduct")
-    public ResponseEntity<String> deductStock(@RequestBody List<UsedPartRequest> usedParts){
+    public ResponseEntity<String> deductStock(@RequestBody List<UsedPartRequest> usedParts) {
         inventoryService.deductStock(usedParts);
         return ResponseEntity.ok("Stock updated successfully");
     }
-    
+
     @GetMapping("/alerts/low-stock")
     public ResponseEntity<List<InventoryPart>> lowStockAlerts() {
         return ResponseEntity.ok(inventoryService.getLowStockParts());
+    }
+
+    @PostMapping("/restock")
+    public ResponseEntity<String> requestRestock(
+            @RequestBody com.inventoryservice.requestdto.CreateRestockRequest req) {
+        inventoryService.requestRestock(req);
+        return ResponseEntity.ok("Restock requested successfully");
+    }
+
+    @GetMapping("/restock")
+    public ResponseEntity<?> getPendingRestocks() {
+        return ResponseEntity.ok(inventoryService.getPendingRestocks());
+    }
+
+    @PutMapping("/restock/{id}/approve")
+    public ResponseEntity<String> approveRestock(@PathVariable String id) {
+        inventoryService.approveRestock(id);
+        return ResponseEntity.ok("Restock approved and stock updated");
     }
 
 }

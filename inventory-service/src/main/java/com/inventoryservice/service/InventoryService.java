@@ -12,15 +12,18 @@ public interface InventoryService {
     InventoryPart addPart(CreatePartRequest request);
 
     List<InventoryPart> getAllParts();
-    
+
     void updatePart(String id, UpdatePartRequest req);
 
-    
     InventoryPart getPartById(String id);
 
-
     void deductStock(List<UsedPartRequest> usedParts);
-    
 
-	List<InventoryPart> getLowStockParts();
+    List<InventoryPart> getLowStockParts();
+
+    void requestRestock(com.inventoryservice.requestdto.CreateRestockRequest req);
+
+    List<com.inventoryservice.model.RestockRequest> getPendingRestocks();
+
+    void approveRestock(String id);
 }

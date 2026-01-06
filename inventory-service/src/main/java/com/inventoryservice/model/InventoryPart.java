@@ -10,9 +10,9 @@ import lombok.Data;
 @Document(collection = "inventory_parts")
 @Data
 public class InventoryPart {
-	
+
     @Id
-    private String id;          
+    private String id;
 
     @NotBlank(message = "Part name is required")
     private String name;
@@ -25,5 +25,8 @@ public class InventoryPart {
 
     @Min(value = 1, message = "Reorder level must be at least 1")
     private int reorderLevel;
+
+    private String category;
+    private String description;
 
 }

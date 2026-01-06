@@ -8,8 +8,10 @@ import org.springframework.stereotype.Repository;
 import com.inventoryservice.model.InventoryPart;
 
 @Repository
-public interface InventoryRepository extends MongoRepository<InventoryPart,String>{
+public interface InventoryRepository extends MongoRepository<InventoryPart, String> {
 
     List<InventoryPart> findByStockLessThanEqual(int stock);
+
+    boolean existsByName(String name);
 
 }
