@@ -9,7 +9,7 @@ import com.servicerequest.enums.ServiceStatus;
 import com.servicerequest.model.ServiceRequest;
 
 @Repository
-public interface ServiceRequestRepository extends MongoRepository<ServiceRequest,String>{
+public interface ServiceRequestRepository extends MongoRepository<ServiceRequest, String> {
 
 	List<ServiceRequest> findByCustomerId(String customerId);
 
@@ -17,4 +17,7 @@ public interface ServiceRequestRepository extends MongoRepository<ServiceRequest
 
 	List<ServiceRequest> findByTechnicianId(String technicianId);
 
+	List<ServiceRequest> findByStatusIn(List<ServiceStatus> statuses);
+
+	boolean existsByVehicleIdAndStatusIn(String vehicleId, List<ServiceStatus> statuses);
 }

@@ -9,9 +9,11 @@ import org.springframework.stereotype.Repository;
 import com.servicerequest.model.ServiceBay;
 
 @Repository
-public interface ServiceBayRepository extends MongoRepository<ServiceBay, String>{
+public interface ServiceBayRepository extends MongoRepository<ServiceBay, String> {
 
 	List<ServiceBay> findByAvailableTrue();
+
+	List<ServiceBay> findByAvailableTrueAndActiveTrue();
 
 	Optional<ServiceBay> findByBayNumber(int bayNumber);
 
