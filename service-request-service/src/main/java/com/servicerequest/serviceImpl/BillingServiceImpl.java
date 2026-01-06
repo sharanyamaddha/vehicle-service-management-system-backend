@@ -34,13 +34,10 @@ public class BillingServiceImpl implements BillingService {
     private InventoryClient inventoryClient;
 
     @Autowired
-    private UserClient userClient;
-
-    @Autowired
     private RabbitTemplate rabbitTemplate;
 
     @Override
-    public Invoice generateInvoice(String serviceRequestId) {
+    public Invoice generateInvoice(String serviceRequestId, Double laborCost) {
 
         if (invoiceRepo.existsByServiceRequestId(serviceRequestId))
             throw new RuntimeException("Invoice already generated for this service request");
@@ -48,26 +45,28 @@ public class BillingServiceImpl implements BillingService {
         ServiceRequest sr = serviceRequestRepo.findById(serviceRequestId)
                 .orElseThrow(() -> new RuntimeException("Service request not found"));
 
-        double total = 0;
+        double total = (laborCost != null ? laborCost : 0.0);
 
+        String note = null;
         for (UsedPart part : sr.getUsedParts()) {
-            double price = inventoryClient.getPart(part.getPartId()).getPrice();
+            var partDto = inventoryClient.getPart(part.getPartId());
+            if (partDto.isFallback()) {
+                note = "Warning: Inventory Service was unavailable. Parts cost is 0.0.";
+            }
+            double price = partDto.getPrice();
             total += price * part.getQty();
         }
 
         Invoice invoice = new Invoice();
+        invoice.setNotes(note);
         invoice.setServiceRequestId(sr.getId());
         invoice.setCustomerId(sr.getCustomerId());
+        invoice.setLaborCost(laborCost);
         invoice.setTotal(total);
         invoice.setStatus(InvoiceStatus.PENDING);
         invoice.setCreatedAt(LocalDateTime.now());
 
         Invoice saved = invoiceRepo.save(invoice);
-
-        String customerEmail = userClient.getUser(sr.getCustomerId()).getEmail();
-        publishEvent("INVOICE_GENERATED",
-                "Invoice generated for your service request",
-                customerEmail);
 
         return saved;
     }
@@ -76,14 +75,14 @@ public class BillingServiceImpl implements BillingService {
     public List<Invoice> getInvoicesByCustomer(String customerId) {
         return invoiceRepo.findByCustomerId(customerId);
     }
-    
+
     @Override
-    public void payInvoice(String id){
+    public void payInvoice(String id) {
 
         Invoice invoice = invoiceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
 
-        if(invoice.getStatus() == InvoiceStatus.PAID)
+        if (invoice.getStatus() == InvoiceStatus.PAID)
             throw new RuntimeException("Invoice already paid");
 
         invoice.setStatus(InvoiceStatus.PAID);
@@ -91,29 +90,29 @@ public class BillingServiceImpl implements BillingService {
     }
 
     @Override
-    public Invoice getInvoiceById(String id){
+    public Invoice getInvoiceById(String id) {
         return invoiceRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
     }
 
     @Override
-    public List<Invoice> getAllInvoices(){
+    public List<Invoice> getAllInvoices() {
         return invoiceRepo.findAll();
     }
 
+    @Override
+    public Map<String, Object> getRevenueStats() {
+        List<Invoice> all = invoiceRepo.findAll();
+        double totalRevenue = all.stream().mapToDouble(Invoice::getTotal).sum();
+        double pendingRevenue = all.stream()
+                .filter(i -> i.getStatus() == InvoiceStatus.PENDING)
+                .mapToDouble(Invoice::getTotal).sum();
 
-    private void publishEvent(String type, String message, String email) {
-
-        NotificationEvent event = new NotificationEvent();
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("type", type);
-        payload.put("message", message);
-        payload.put("email", email);
-
-        rabbitTemplate.convertAndSend(
-                NotificationConstants.EXCHANGE,
-                NotificationConstants.ROUTING_KEY,
-                payload
-        );
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalRevenue", totalRevenue);
+        stats.put("pendingRevenue", pendingRevenue);
+        stats.put("totalInvoices", all.size());
+        stats.put("paidInvoices", all.stream().filter(i -> i.getStatus() == InvoiceStatus.PAID).count());
+        return stats;
     }
 }
