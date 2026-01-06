@@ -1,6 +1,5 @@
 package com.vehicleservice.model;
 
 public enum VehicleType {
-    CAR, BIKE, TRUCK
+    CAR, BIKE, TRUCK, BUS, SCOOTY
 }
-

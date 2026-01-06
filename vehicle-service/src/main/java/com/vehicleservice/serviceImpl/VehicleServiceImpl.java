@@ -12,14 +12,13 @@ import com.vehicleservice.responsedto.VehicleResponse;
 import com.vehicleservice.service.VehicleService;
 
 @Service
-public class VehicleServiceImpl implements VehicleService{
-
+public class VehicleServiceImpl implements VehicleService {
 
     @Autowired
     private VehicleRepository vehicleRepo;
-    
+
     @Override
-    public VehicleResponse addVehicle(VehicleRequest req) {
+    public String addVehicle(VehicleRequest req) {
 
         Vehicle v = new Vehicle();
         v.setOwnerId(req.getOwnerId());
@@ -29,10 +28,18 @@ public class VehicleServiceImpl implements VehicleService{
         v.setYear(req.getYear());
         v.setType(req.getType());
         v.setColor(req.getColor());
+        // fields removed
+        if (vehicleRepo.existsByRegistrationNumber(req.getRegistrationNumber())) {
+            throw new RuntimeException("Vehicle with this registration number already exists.");
+        }
 
-        return mapToResponse(vehicleRepo.save(v));
+        v.setDescription(req.getDescription());
+
+        vehicleRepo.save(v);
+        // return mapToResponse(vehicleRepo.save(v));
+
+        return "Vehicle added succesfully";
     }
-    
 
     @Override
     public List<VehicleResponse> getVehiclesByCustomer(String id) {
@@ -40,13 +47,20 @@ public class VehicleServiceImpl implements VehicleService{
                 .map(this::mapToResponse)
                 .toList();
     }
-    
+
+    @Override
+    public List<VehicleResponse> getAllVehicles() {
+        return vehicleRepo.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     @Override
     public String deleteVehicle(String id) {
         vehicleRepo.deleteById(id);
         return "Vehicle deleted";
     }
-    
+
     @Override
     public void updateVehicle(String id, VehicleRequest req) {
 
@@ -58,26 +72,34 @@ public class VehicleServiceImpl implements VehicleService{
         vehicle.setColor(req.getColor());
         vehicle.setYear(req.getYear());
         vehicle.setType(req.getType());
+        vehicle.setDescription(req.getDescription());
 
         vehicleRepo.save(vehicle);
     }
 
     @Override
-    public VehicleResponse getVehicleById(String id){
+    public VehicleResponse getVehicleById(String id) {
         Vehicle vehicle = vehicleRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
         return mapToResponse(vehicle);
     }
 
-    
-    private VehicleResponse mapToResponse(Vehicle v){
+    private VehicleResponse mapToResponse(Vehicle v) {
         VehicleResponse r = new VehicleResponse();
         r.setId(v.getId());
         r.setOwnerId(v.getOwnerId());
         r.setRegistrationNumber(v.getRegistrationNumber());
+        r.setMake(v.getMake());
         r.setModel(v.getModel());
+        r.setYear(v.getYear());
         r.setColor(v.getColor());
-        r.setType(v.getType());	
+        r.setType(v.getType());
+        r.setDescription(v.getDescription());
         return r;
+    }
+
+    @Override
+    public boolean existsByRegistrationNumber(String registrationNumber) {
+        return vehicleRepo.existsByRegistrationNumber(registrationNumber);
     }
 }

@@ -25,37 +25,44 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/vehicles")
 public class VehicleController {
 
-	   @Autowired
-	    private VehicleService vehicleService;
-	   
-	   @PostMapping
-	    public ResponseEntity<VehicleResponse> create(@Valid @RequestBody VehicleRequest req){
-	        return ResponseEntity.status(HttpStatus.CREATED).body(vehicleService.addVehicle(req));
-	    }
-	   
-	    @GetMapping("/customer/{id}")
-	    public ResponseEntity<List<VehicleResponse>> byCustomer(@PathVariable String id){
-	        return ResponseEntity.ok(vehicleService.getVehiclesByCustomer(id));
-	    }
-	    
-	    @DeleteMapping("/{id}")
-	    public ResponseEntity<Map<String,String>> delete(@PathVariable String id){
-	        return ResponseEntity.ok(Map.of("message", vehicleService.deleteVehicle(id)));
-	    }
-	    
-	    
-	    @PutMapping("/{id}")
-	    public ResponseEntity<Map<String,String>> updateVehicle(@PathVariable String id,
-	                                                            @Valid @RequestBody VehicleRequest req){
-	        vehicleService.updateVehicle(id, req);
-	        return ResponseEntity.ok(Map.of("message","Vehicle updated successfully"));
-	    }
+	@Autowired
+	private VehicleService vehicleService;
 
-	    @GetMapping("/{id}")
-	    public ResponseEntity<VehicleResponse> getById(@PathVariable String id){
-	        return ResponseEntity.ok(vehicleService.getVehicleById(id));
-	    }
+	@GetMapping
+	public ResponseEntity<List<VehicleResponse>> getAll() {
+		return ResponseEntity.ok(vehicleService.getAllVehicles());
+	}
 
-	   
-	   
+	@PostMapping
+	public ResponseEntity<String> create(@Valid @RequestBody VehicleRequest req) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(vehicleService.addVehicle(req));
+	}
+
+	@GetMapping("/customer/{id}")
+	public ResponseEntity<List<VehicleResponse>> byCustomer(@PathVariable String id) {
+		return ResponseEntity.ok(vehicleService.getVehiclesByCustomer(id));
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Map<String, String>> delete(@PathVariable String id) {
+		return ResponseEntity.ok(Map.of("message", vehicleService.deleteVehicle(id)));
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<Map<String, String>> updateVehicle(@PathVariable String id,
+			@Valid @RequestBody VehicleRequest req) {
+		vehicleService.updateVehicle(id, req);
+		return ResponseEntity.ok(Map.of("message", "Vehicle updated successfully"));
+	}
+
+	@GetMapping("/{id}")
+	public ResponseEntity<VehicleResponse> getById(@PathVariable String id) {
+		return ResponseEntity.ok(vehicleService.getVehicleById(id));
+	}
+
+	@GetMapping("/check-registration/{regNo}")
+	public ResponseEntity<Boolean> checkRegistration(@PathVariable String regNo) {
+		return ResponseEntity.ok(vehicleService.existsByRegistrationNumber(regNo));
+	}
+
 }
