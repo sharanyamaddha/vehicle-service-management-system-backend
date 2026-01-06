@@ -18,7 +18,7 @@ public class TechnicianServiceImpl implements TechnicianService {
     private TechnicianRepository techRepository;
 
     @Override
-    public TechnicianResponse createTechnician(TechnicianCreateRequest req){
+    public TechnicianResponse createTechnician(TechnicianCreateRequest req) {
 
         Technician t = new Technician();
         t.setUserId(req.getUserId());
@@ -29,20 +29,19 @@ public class TechnicianServiceImpl implements TechnicianService {
     }
 
     @Override
-    public List<TechnicianResponse> getTechniciansByStatus(boolean status){
+    public List<TechnicianResponse> getTechniciansByStatus(boolean status) {
         return techRepository.findByAvailable(status)
                 .stream().map(this::map).toList();
     }
-    
+
     @Override
-    public List<TechnicianResponse> getAvailableBySpecialization(String Specialization){
+    public List<TechnicianResponse> getAvailableBySpecialization(String Specialization) {
         return techRepository
-            .findBySpecializationAndAvailable(Specialization, true)
-            .stream().map(this::map).toList();
+                .findBySpecializationAndAvailable(Specialization, true)
+                .stream().map(this::map).toList();
     }
 
-
-    private TechnicianResponse map(Technician t){
+    private TechnicianResponse map(Technician t) {
         TechnicianResponse r = new TechnicianResponse();
         r.setId(t.getId());
         r.setUserId(t.getUserId());
@@ -50,22 +49,24 @@ public class TechnicianServiceImpl implements TechnicianService {
         r.setAvailable(t.isAvailable());
         return r;
     }
-    
-    @Override
-    public void incrementWorkload(String techId) {
 
-        Technician tech = techRepository.findById(techId)
-            .orElseThrow(() -> new RuntimeException("Technician not found"));
+    @Override
+    public void incrementWorkload(String id) {
+
+        Technician tech = techRepository.findById(id)
+                .orElseGet(() -> techRepository.findByUserId(id)
+                        .orElseThrow(() -> new RuntimeException("Technician not found")));
 
         tech.setCurrentJobs(tech.getCurrentJobs() + 1);
         techRepository.save(tech);
     }
 
     @Override
-    public void decrementWorkload(String techId) {
+    public void decrementWorkload(String id) {
 
-        Technician tech = techRepository.findById(techId)
-            .orElseThrow(() -> new RuntimeException("Technician not found"));
+        Technician tech = techRepository.findById(id)
+                .orElseGet(() -> techRepository.findByUserId(id)
+                        .orElseThrow(() -> new RuntimeException("Technician not found")));
 
         tech.setCurrentJobs(Math.max(0, tech.getCurrentJobs() - 1));
         techRepository.save(tech);

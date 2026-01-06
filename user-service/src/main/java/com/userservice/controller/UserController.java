@@ -63,6 +63,11 @@ public class UserController {
 		return ResponseEntity.ok(userService.getDisabledUsers());
 	}
 
+	@GetMapping("/invited")
+	public ResponseEntity<List<UserResponse>> invitedUsers() {
+		return ResponseEntity.ok(userService.getInvitedUsers());
+	}
+
 	@GetMapping("/me")
 	public ResponseEntity<UserResponse> me(@RequestHeader("Authorization") String token) {
 		return ResponseEntity.ok(userService.getMyProfile(token));
@@ -70,22 +75,28 @@ public class UserController {
 
 	@PutMapping("/me")
 	public ResponseEntity<Map<String, String>> updateProfile(@RequestHeader("Authorization") String auth,
-			@Valid	@RequestBody UpdateProfileRequest req) {
+			@Valid @RequestBody UpdateProfileRequest req) {
 		userService.updateMyProfile(auth, req);
 		return ResponseEntity.ok(Map.of("message", "Profile updated"));
 	}
 
 	@PatchMapping("/me/password")
 	public ResponseEntity<Map<String, String>> changePassword(@RequestHeader("Authorization") String auth,
-			@Valid	@RequestBody ChangePasswordRequest req) {
+			@Valid @RequestBody ChangePasswordRequest req) {
 		userService.changeMyPassword(auth, req);
 		return ResponseEntity.ok(Map.of("message", "Password updated"));
 	}
 
 	@PatchMapping("/{id}/reset-password")
-	public ResponseEntity<Map<String,String>> resetPassword(@PathVariable String id){
-	    userService.resetPassword(id);
-	    return ResponseEntity.ok(Map.of("message","Password reset to default"));
+	public ResponseEntity<Map<String, String>> resetPassword(@PathVariable String id) {
+		userService.resetPassword(id);
+		return ResponseEntity.ok(Map.of("message", "Password reset to default"));
+	}
+
+	@PostMapping("/{id}/resend-invite")
+	public ResponseEntity<Map<String, String>> resendInvite(@PathVariable String id) {
+		userService.resendInvite(id);
+		return ResponseEntity.ok(Map.of("message", "Invite link sent again to email."));
 	}
 
 }

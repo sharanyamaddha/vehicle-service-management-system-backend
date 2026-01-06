@@ -9,7 +9,7 @@ import com.userservice.model.User;
 import com.userservice.model.enums.Role;
 
 @Repository
-public interface UserRepository extends MongoRepository<User,String>{
+public interface UserRepository extends MongoRepository<User, String> {
 
 	Optional<User> findByEmail(String email);
 
@@ -19,5 +19,8 @@ public interface UserRepository extends MongoRepository<User,String>{
 
 	Optional<User> findByRole(Role valueOf);
 
+	Optional<User> findByInviteToken(String inviteToken);
+
+	java.util.List<User> findByPasswordSetFalse();
 
 }

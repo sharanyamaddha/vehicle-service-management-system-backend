@@ -11,33 +11,37 @@ import com.userservice.responsedto.UserResponse;
 
 public interface UserService {
 
-    String registerCustomer(RegisterRequest req);
+    LoginResponse registerCustomer(RegisterRequest req);
 
     String createInternalUser(RegisterRequest req);
 
     LoginResponse login(LoginRequest req);
-    
+
     UserResponse getMyProfile(String token);
-    
+
     void updateMyProfile(String token, UpdateProfileRequest req);
-    
+
     void changeMyPassword(String token, ChangePasswordRequest req);
 
-
     List<UserResponse> getAllUsers();
-    
+
     UserResponse getUserById(String id);
 
-    
     List<UserResponse> getUsersByRole(String role);
 
     void disableUser(String id);
 
     void enableUser(String id);
-    
+
     List<UserResponse> getDisabledUsers();
 
     void resetPassword(String id);
 
-    
+    // Invite flows
+    String activateAccount(String token, String password);
+
+    List<UserResponse> getInvitedUsers();
+
+    void resendInvite(String userId);
+
 }

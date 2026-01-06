@@ -13,28 +13,33 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-@Document(collection="users")
+@Document(collection = "users")
 @Data
 public class User {
 
-	@Id
+    @Id
     private String id;
-	
-	@NotBlank(message = "Username is required")
-	private String username;
-	
+
+    @NotBlank(message = "Username is required")
+    private String username;
+
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;
-    
+
     @NotBlank(message = "Password is required")
     private String password;
-    
+
     @NotNull(message = "Role is required")
-    private Role role;    // CUSTOMER, TECHNICIAN, MANAGER, ADMIN
-    
+    private Role role; // CUSTOMER, TECHNICIAN, MANAGER, ADMIN
+
     private boolean active;
-    
+
+    // Invite fields
+    private boolean passwordSet = false;
+    private String inviteToken;
+    private LocalDateTime inviteExpiry;
+
     @CreatedDate
     private LocalDateTime createdAt;
 }

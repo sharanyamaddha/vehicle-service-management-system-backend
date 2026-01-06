@@ -11,9 +11,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserResponse {
     private String id;
-    private String username;     
+    private String username;
     private String email;
     private Role role;
     private boolean active;
+    private boolean passwordSet;
+    private String specialization;
+    private int workload;
+    private int maxCapacity;
+    private boolean available;
 }
-

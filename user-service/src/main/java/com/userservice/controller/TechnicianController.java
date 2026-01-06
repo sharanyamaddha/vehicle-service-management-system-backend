@@ -22,31 +22,30 @@ public class TechnicianController {
 
     // ADMIN – assign specialization
     @PostMapping
-    public ResponseEntity<TechnicianResponse> create(@Valid @RequestBody TechnicianCreateRequest req){
+    public ResponseEntity<TechnicianResponse> create(@Valid @RequestBody TechnicianCreateRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(techService.createTechnician(req));
     }
 
     // MANAGER – view available technicians
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<TechnicianResponse>> byStatus(@PathVariable boolean status){
+    public ResponseEntity<List<TechnicianResponse>> byStatus(@PathVariable boolean status) {
         return ResponseEntity.ok(techService.getTechniciansByStatus(status));
     }
-    
+
     @GetMapping("/specialization/{type}")
-    public ResponseEntity<List<TechnicianResponse>> bySpecialization(@PathVariable String Specialization){
+    public ResponseEntity<List<TechnicianResponse>> bySpecialization(@PathVariable String Specialization) {
         return ResponseEntity.ok(techService.getAvailableBySpecialization(Specialization));
     }
 
-    @PatchMapping("/technicians/{id}/increment")
-    public void incrementWorkload(@PathVariable String id){
+    @PutMapping("/{id}/increment")
+    public void incrementWorkload(@PathVariable String id) {
         techService.incrementWorkload(id);
     }
 
-    @PatchMapping("/technicians/{id}/decrement")
-    public void decrementWorkload(@PathVariable String id){
+    @PutMapping("/{id}/decrement")
+    public void decrementWorkload(@PathVariable String id) {
         techService.decrementWorkload(id);
     }
-
 
 }

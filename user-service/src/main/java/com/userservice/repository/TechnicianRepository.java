@@ -1,6 +1,5 @@
 package com.userservice.repository;
 
-
 import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -10,14 +9,14 @@ import com.userservice.model.Technician;
 import com.userservice.responsedto.TechnicianResponse;
 
 @Repository
-public interface TechnicianRepository extends MongoRepository<Technician,String>{
+public interface TechnicianRepository extends MongoRepository<Technician, String> {
 
-	List<Technician> findByAvailableTrue();
-    
+    List<Technician> findByAvailableTrue();
+
     List<Technician> findByAvailable(boolean status);
-    
+
     List<Technician> findBySpecializationAndAvailable(String specialization, boolean available);
 
+    java.util.Optional<Technician> findByUserId(String userId);
 
-	
 }
