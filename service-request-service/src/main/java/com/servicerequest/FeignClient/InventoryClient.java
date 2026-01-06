@@ -8,10 +8,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.servicerequest.InventoryClientFallback;
 import com.servicerequest.model.UsedPart;
 import com.servicerequest.requestdto.InventoryPartDTO;
 
-@FeignClient(name = "inventory-service")
+@FeignClient(name = "inventory-service", fallback = InventoryClientFallback.class)
 public interface InventoryClient {
 
     @PostMapping("/api/parts/deduct")
