@@ -20,20 +20,35 @@ import com.servicerequest.service.ServiceBayService;
 @RestController
 @RequestMapping("/api/bays")
 public class ServiceBayController {
-	
+
 	@Autowired
 	private ServiceBayService bayService;
-	
+
 	@PostMapping
-	public ResponseEntity<ServiceBay> create(@RequestBody ServiceBay bay){
+	public ResponseEntity<ServiceBay> create(@RequestBody com.servicerequest.model.ServiceBay bay) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(bayService.createBay(bay));
 	}
-	
-    @GetMapping("/available")
-    public ResponseEntity<List<ServiceBay>> available(){
-        return ResponseEntity.ok(bayService.getAvailableBays());
-    }
 
+	@GetMapping("/available")
+	public ResponseEntity<List<ServiceBay>> available() {
+		return ResponseEntity.ok(bayService.getAvailableBays());
+	}
 
+	@GetMapping
+	public ResponseEntity<List<ServiceBay>> getAll() {
+		return ResponseEntity.ok(bayService.getAllBays());
+	}
+
+	@PatchMapping("/{bayNumber}/status")
+	public ResponseEntity<String> updateStatus(@PathVariable int bayNumber, @RequestBody Map<String, Boolean> status) {
+		bayService.updateStatus(bayNumber, status.get("isAvailable"));
+		return ResponseEntity.ok("Status updated");
+	}
+
+	@PostMapping("/{bayNumber}/release")
+	public ResponseEntity<String> releaseBay(@PathVariable int bayNumber) {
+		bayService.releaseBay(bayNumber);
+		return ResponseEntity.ok("Bay released manually");
+	}
 
 }

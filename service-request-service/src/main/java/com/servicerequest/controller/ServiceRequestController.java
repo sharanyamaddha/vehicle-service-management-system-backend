@@ -21,7 +21,6 @@ import com.servicerequest.model.UsedPart;
 import com.servicerequest.requestdto.AssignTechnicianDTO;
 import com.servicerequest.requestdto.ServiceRequestDTO;
 import com.servicerequest.requestdto.UpdateStatusDTO;
-import com.servicerequest.responsedto.ServiceRequestResponse;
 import com.servicerequest.service.ServiceRequestService;
 
 import jakarta.validation.Valid;
@@ -30,82 +29,86 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/service-requests")
 public class ServiceRequestController {
 
-	@Autowired
-	private ServiceRequestService service;
-	
+    @Autowired
+    private ServiceRequestService service;
 
     @PostMapping
-    public ResponseEntity<ServiceRequestResponse> create(
-            @Valid @RequestBody ServiceRequestDTO dto){
+    public ResponseEntity<String> create(
+            @Valid @RequestBody ServiceRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.createRequest(dto));
     }
-    
+
     @GetMapping("/customer/{id}")
-    public ResponseEntity<List<ServiceRequest>> customerRequests(@PathVariable String id){
+    public ResponseEntity<List<ServiceRequest>> customerRequests(@PathVariable String id) {
         return ResponseEntity.ok(service.getCustomerRequests(id));
     }
-    
+
     @PatchMapping("/{id}/assign")
-    public Map<String,String> assign(@PathVariable String id,
-                                     @Valid @RequestBody AssignTechnicianDTO dto){
+    public Map<String, String> assign(@PathVariable String id,
+            @Valid @RequestBody AssignTechnicianDTO dto) {
         return Map.of("message", service.assignTechnician(id, dto));
     }
-    
+
     @PatchMapping("/{id}/start")
-    public ResponseEntity<Map<String,String>> startJob(@PathVariable String id){
+    public ResponseEntity<Map<String, String>> startJob(@PathVariable String id) {
         return ResponseEntity.ok(Map.of("message", service.startJob(id)));
     }
-    
+
     @PatchMapping("/{id}/status")
-    public Map<String,String> status(@PathVariable String id,
-                                     @Valid @RequestBody UpdateStatusDTO dto){
+    public Map<String, String> status(@PathVariable String id,
+            @Valid @RequestBody UpdateStatusDTO dto) {
         return Map.of("message", service.updateStatus(id, dto));
     }
-    
 
-
-    
-    //Techncican requests parts
+    // Techncican requests parts
     @PostMapping("/{id}/parts/request")
-    public Map<String,String> requestParts(@PathVariable String id,
-            @RequestBody List<UsedPart> parts){
+    public Map<String, String> requestParts(@PathVariable String id,
+            @RequestBody List<UsedPart> parts) {
         return Map.of("message", service.requestParts(id, parts));
     }
 
-    //Manager approves parts
+    // Manager approves parts
     @PatchMapping("/{id}/parts/approve")
-    public Map<String,String> approveParts(@PathVariable String id,
-            @RequestParam String managerId){
+    public Map<String, String> approveParts(@PathVariable String id,
+            @RequestParam String managerId) {
         return Map.of("message", service.approveParts(id, managerId));
     }
-    
+
     @GetMapping("/status/{status}")
-    public List<ServiceRequest> getByStatus(@PathVariable ServiceStatus status){
+    public List<ServiceRequest> getByStatus(@PathVariable ServiceStatus status) {
         return service.getByStatus(status);
     }
 
-    
- // MANAGER
+    // MANAGER
     @GetMapping("/manager")
-    public List<ServiceRequest> allRequests(){
+    public List<ServiceRequest> allRequests() {
         return service.getAllRequests();
     }
 
     // TECHNICIAN
     @GetMapping("/technician/{id}")
-    public List<ServiceRequest> technicianRequests(@PathVariable String id){
+    public List<ServiceRequest> technicianRequests(@PathVariable String id) {
         return service.getTechnicianRequests(id);
     }
-    
+
     @PatchMapping("/{id}/close")
-    public ResponseEntity<Map<String,String>> closeRequest(@PathVariable String id){
-        return ResponseEntity.ok(Map.of("message", service.closeRequest(id)));
+    public ResponseEntity<Map<String, String>> closeRequest(@PathVariable String id, @RequestParam Double laborCost) {
+        return ResponseEntity.ok(Map.of("message", service.closeRequest(id, laborCost)));
     }
 
     @GetMapping("/{id}")
-    public ServiceRequest getById(@PathVariable String id){
+    public ServiceRequest getById(@PathVariable String id) {
         return service.getById(id);
     }
 
+    @GetMapping("/technician-performance")
+    public List<Map<String, Object>> getTechnicianPerformance() {
+        return service.getTechnicianPerformance();
+    }
+
+    @GetMapping("/technician-workload")
+    public Map<String, Long> getTechnicianWorkload() {
+        return service.getTechnicianWorkload();
+    }
 
 }
