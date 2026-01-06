@@ -12,9 +12,11 @@ public class ServiceBay {
 
     @Id
     private String id;
-    
+
     @Min(value = 1, message = "Bay number must be required")
     private int bayNumber;
-    
+
     private boolean available = true;
+
+    private boolean active = true;
 }

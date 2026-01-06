@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ServiceRequest {
 
-	@Id
+    @Id
     private String id;
 
     @NotBlank(message = "Request number is required")
@@ -46,6 +46,11 @@ public class ServiceRequest {
     @NotNull(message = "Priority is required")
     private Priority priority;
 
+    // Denormalized Fields for Performance
+    private String customerName;
+    private String technicianName;
+    private String vehicleDescription;
+
     private ServiceStatus status = ServiceStatus.REQUESTED;
 
     @NotBlank(message = "Issue description is required")
@@ -53,6 +58,8 @@ public class ServiceRequest {
 
     @Version
     private Long version;
+
+    private Double laborCost; // Manual labor cost entry
 
     @Valid
     private List<UsedPart> usedParts = new ArrayList<>();

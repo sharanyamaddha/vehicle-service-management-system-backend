@@ -17,21 +17,32 @@ import lombok.Data;
 @Data
 public class Invoice {
 
-	 @Id
-	    private String id;
+	@Id
+	private String id;
 
-	    @NotBlank(message = "Service Request ID is required")
-	    private String serviceRequestId;
+	@NotBlank(message = "Service Request ID is required")
+	private String serviceRequestId;
 
-	    @NotBlank(message = "Customer ID is required")
-	    private String customerId;
+	@NotBlank(message = "Customer ID is required")
+	private String customerId;
 
-	    @Min(value = 0, message = "Invoice total cannot be negative")
-	    private double total;
+	@Min(value = 0, message = "Invoice total cannot be negative")
+	private double total;
 
-	    @NotNull(message = "Invoice status is required")
-	    private InvoiceStatus status;   // PENDING | PAID
+	@NotNull(message = "Invoice status is required")
+	private InvoiceStatus status; // PENDING | PAID
 
-	    @CreatedDate
-	    private LocalDateTime createdAt;
+	@CreatedDate
+	private LocalDateTime createdAt;
+
+	private Double laborCost;
+
+	// Razorpay metadata
+	private String razorpayOrderId;
+	private String razorpayPaymentId;
+	private String razorpaySignature;
+	private String paymentMethod;
+	private LocalDateTime paidAt;
+
+	private String notes;
 }

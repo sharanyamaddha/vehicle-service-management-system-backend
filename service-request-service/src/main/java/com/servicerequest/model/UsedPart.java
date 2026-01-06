@@ -16,4 +16,7 @@ public class UsedPart {
 
     @Min(value = 1, message = "Quantity must be at least 1")
     private int qty;
+
+    private String partName;
+    private Double price;
 }
