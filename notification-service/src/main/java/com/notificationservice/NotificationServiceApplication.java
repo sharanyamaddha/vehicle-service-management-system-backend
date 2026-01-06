@@ -9,7 +9,24 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class NotificationServiceApplication {
 
 	public static void main(String[] args) {
+		loadEnvVariables();
 		SpringApplication.run(NotificationServiceApplication.class, args);
+	}
+
+	private static void loadEnvVariables() {
+		try {
+			io.github.cdimascio.dotenv.Dotenv dotenv = io.github.cdimascio.dotenv.Dotenv.configure()
+					.directory("../")
+					.ignoreIfMissing()
+					.load();
+
+			dotenv.entries().forEach(entry -> {
+				System.setProperty(entry.getKey(), entry.getValue());
+			});
+			System.out.println("Loaded .env file successfully.");
+		} catch (Exception e) {
+			System.out.println(".env file not found, using system envs.");
+		}
 	}
 
 }

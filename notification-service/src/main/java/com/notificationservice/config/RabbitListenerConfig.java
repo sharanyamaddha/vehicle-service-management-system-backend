@@ -6,6 +6,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.ConditionalRejectingErrorHandler;
 import org.springframework.amqp.support.converter.DefaultClassMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.slf4j.Logger;
@@ -28,17 +29,16 @@ public class RabbitListenerConfig {
         factory.setMessageConverter(jackson2JsonMessageConverter());
         factory.setAutoStartup(true);
         
-        // Enable manual acknowledgment for better error handling
+
         factory.setAcknowledgeMode(AcknowledgeMode.AUTO);
         
-        // Set concurrency
+
         factory.setConcurrentConsumers(1);
         factory.setMaxConcurrentConsumers(3);
         
-        // Error handler for better debugging
+
         factory.setErrorHandler(new ConditionalRejectingErrorHandler());
-        
-        // Enable default requeue policy
+
         factory.setDefaultRequeueRejected(false);
         
         logger.info("✅ RabbitMQ Listener Container Factory configured successfully");
@@ -47,8 +47,8 @@ public class RabbitListenerConfig {
     }
 
     @Bean
-    public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
-        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+    public JacksonJsonMessageConverter jackson2JsonMessageConverter() {
+        JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter();
         DefaultClassMapper classMapper = new DefaultClassMapper();
         classMapper.setTrustedPackages("*");
         converter.setClassMapper(classMapper);
