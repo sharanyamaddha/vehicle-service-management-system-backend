@@ -1,0 +1,41 @@
+let token;
+
+try {
+    console.log(" TEST: Customer tries to Create Manager ");
+    
+    // Run your saved Login request (replace with your actual ID)
+    const loginResponse = await pm.execution.runRequest("41536847-6522096c-c81f-4576-9e6a-b8ba82a4e6ea");
+    token = loginResponse.json().token;
+    console.log("Logged in as: CUSTOMER");
+    
+    // Try to access Admin endpoint
+    let response = await pm.sendRequest({
+        url: 'http://localhost:8080/api/users/create',
+        method: 'POST',
+        header: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+        body: {
+            mode: 'raw',
+            raw: JSON.stringify({
+                "username": "manager2",
+                "email": "manager2@gmail.com",
+                "password": "manager2",
+                "role": "MANAGER"
+                }
+)
+        }
+    });
+    
+    console.log("Response Status:", response.code);
+    
+    if (response.code === 403) {
+        console.log(" ACCESS BLOCKED - Customer cannot create Manager");
+    } else {
+        console.log(" UNEXPECTED - Got:", response.code);
+    }
+    
+} catch (err) {
+    console.error("Request failed:", err);
+}
