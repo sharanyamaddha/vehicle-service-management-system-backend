@@ -15,9 +15,9 @@ public interface UserRepository extends MongoRepository<User, String> {
 
 	Optional<User> findByUsername(String username);
 
-	Optional<User> findByActiveFalse();
+	java.util.List<User> findByActiveFalse();
 
-	Optional<User> findByRole(Role valueOf);
+	java.util.List<User> findByRole(Role valueOf);
 
 	Optional<User> findByInviteToken(String inviteToken);
 

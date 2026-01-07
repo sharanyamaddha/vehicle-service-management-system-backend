@@ -112,4 +112,25 @@ public class VehicleControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Vehicle updated successfully"));
     }
+
+    @Test
+    void getById_Success() throws Exception {
+        VehicleResponse res = new VehicleResponse();
+        res.setId("1");
+        res.setRegistrationNumber("AP01AB1234");
+        when(vehicleService.getVehicleById("1")).thenReturn(res);
+
+        mockMvc.perform(get("/api/vehicles/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.registrationNumber").value("AP01AB1234"));
+    }
+
+    @Test
+    void checkRegistration_Success() throws Exception {
+        when(vehicleService.existsByRegistrationNumber("AP01AB1234")).thenReturn(true);
+
+        mockMvc.perform(get("/api/vehicles/check-registration/AP01AB1234"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(true));
+    }
 }

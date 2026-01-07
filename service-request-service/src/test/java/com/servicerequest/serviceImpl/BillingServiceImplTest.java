@@ -110,4 +110,31 @@ public class BillingServiceImplTest {
 
         assertThrows(RuntimeException.class, () -> billingService.payInvoice("inv1"));
     }
+
+    @Test
+    void getRevenueStats_Success() {
+        Invoice i1 = new Invoice();
+        i1.setTotal(100.0);
+        i1.setStatus(InvoiceStatus.PAID);
+
+        Invoice i2 = new Invoice();
+        i2.setTotal(200.0);
+        i2.setStatus(InvoiceStatus.PAID);
+
+        when(invoiceRepo.findAll()).thenReturn(List.of(i1, i2));
+
+        java.util.Map<String, Object> stats = billingService.getRevenueStats();
+
+        assertEquals(300.0, stats.get("totalRevenue"));
+    }
+
+    @Test
+    void getInvoicesByCustomer_Success() {
+        when(invoiceRepo.findByCustomerId("cust1")).thenReturn(List.of(mockInvoice));
+
+        List<Invoice> list = billingService.getInvoicesByCustomer("cust1");
+
+        assertEquals(1, list.size());
+        assertEquals("inv1", list.get(0).getId());
+    }
 }

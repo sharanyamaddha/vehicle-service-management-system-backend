@@ -8,14 +8,12 @@ import static org.mockito.Mockito.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -193,5 +191,173 @@ public class UserServiceImplTest {
         // Assert
         assertEquals("ELECTRICAL", res.getSpecialization());
         assertEquals(2, res.getWorkload());
+    }
+
+    @Test
+    void changeMyPassword_OldPasswordWrong() {
+        ChangePasswordRequest req = new ChangePasswordRequest();
+        req.setOldPassword("wrongOld");
+        req.setNewPassword("new");
+
+        when(jwtUtil.extractUsername("token")).thenReturn("test@example.com");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(mockUser));
+        when(passwordEncoder.matches("wrongOld", "encodedPassword")).thenReturn(false);
+
+        assertThrows(RuntimeException.class, () -> userService.changeMyPassword("Bearer token", req));
+    }
+
+    @Test
+    void updateMyProfile_Success() {
+        UpdateProfileRequest req = new UpdateProfileRequest();
+        req.setUsername("newUsername");
+
+        when(jwtUtil.extractUsername("token")).thenReturn("test@example.com");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(mockUser));
+        when(userRepository.save(any(User.class))).thenReturn(mockUser);
+
+        userService.updateMyProfile("Bearer token", req);
+
+        verify(userRepository).save(mockUser);
+        assertEquals("newUsername", mockUser.getUsername());
+    }
+
+    @Test
+    void getMyProfile_Success() {
+        when(jwtUtil.extractUsername("token")).thenReturn("test@example.com");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(mockUser));
+
+        UserResponse res = userService.getMyProfile("Bearer token");
+
+        assertEquals("testuser", res.getUsername());
+    }
+
+    @Test
+    void extractUserFromToken_InvalidHeader() {
+        assertThrows(RuntimeException.class, () -> userService.getMyProfile("InvalidHeader"));
+    }
+
+    @Test
+    void extractUserFromToken_UserDisabled() {
+        mockUser.setActive(false);
+        when(jwtUtil.extractUsername("token")).thenReturn("test@example.com");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(mockUser));
+
+        assertThrows(RuntimeException.class, () -> userService.getMyProfile("Bearer token"));
+    }
+
+    @Test
+    void activateAccount_Success() {
+        mockUser.setInviteToken("validToken");
+        mockUser.setInviteExpiry(LocalDateTime.now().plusHours(1));
+        mockUser.setPasswordSet(false);
+
+        when(userRepository.findByInviteToken("validToken")).thenReturn(Optional.of(mockUser));
+        when(passwordEncoder.encode("newPassword")).thenReturn("newEncoded");
+
+        String res = userService.activateAccount("validToken", "newPassword");
+
+        assertEquals("Account activated successfully", res);
+        assertTrue(mockUser.isPasswordSet());
+        assertNull(mockUser.getInviteToken());
+        verify(userRepository).save(mockUser);
+    }
+
+    @Test
+    void activateAccount_Expired() {
+        mockUser.setInviteToken("expiredToken");
+        mockUser.setInviteExpiry(LocalDateTime.now().minusHours(1));
+
+        when(userRepository.findByInviteToken("expiredToken")).thenReturn(Optional.of(mockUser));
+
+        assertThrows(RuntimeException.class, () -> userService.activateAccount("expiredToken", "pass"));
+    }
+
+    @Test
+    void activateAccount_InvalidToken() {
+        when(userRepository.findByInviteToken("invalid")).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> userService.activateAccount("invalid", "pass"));
+    }
+
+    @Test
+    void resetPassword_Success() {
+        when(userRepository.findById("1")).thenReturn(Optional.of(mockUser));
+        when(passwordEncoder.encode(anyString())).thenReturn("newEncoded");
+
+        userService.resetPassword("1");
+
+        verify(userRepository).save(mockUser);
+        assertTrue(mockUser.isPasswordSet());
+    }
+
+    @Test
+    void disableUser_Success() {
+        when(userRepository.findById("1")).thenReturn(Optional.of(mockUser));
+        userService.disableUser("1");
+        assertFalse(mockUser.isActive());
+        verify(userRepository).save(mockUser);
+    }
+
+    @Test
+    void enableUser_Success() {
+        mockUser.setActive(false);
+        when(userRepository.findById("1")).thenReturn(Optional.of(mockUser));
+        userService.enableUser("1");
+        assertTrue(mockUser.isActive());
+        verify(userRepository).save(mockUser);
+    }
+
+    @Test
+    void getUsersByRole_Success() {
+        when(userRepository.findByRole(Role.MANAGER)).thenReturn(List.of(mockUser));
+        List<UserResponse> list = userService.getUsersByRole("MANAGER");
+        assertEquals(1, list.size());
+    }
+
+    @Test
+    void getDisabledUsers_Success() {
+        mockUser.setActive(false);
+        when(userRepository.findByActiveFalse()).thenReturn(List.of(mockUser));
+        List<UserResponse> list = userService.getDisabledUsers();
+        assertEquals(1, list.size());
+    }
+
+    @Test
+    void getAllUsers_Success() {
+        when(userRepository.findAll()).thenReturn(List.of(mockUser));
+        List<UserResponse> list = userService.getAllUsers();
+        assertEquals(1, list.size());
+    }
+
+    @Test
+    void getInvitedUsers_Success() {
+        mockUser.setPasswordSet(false);
+        mockUser.setInviteToken("token");
+        when(userRepository.findAll()).thenReturn(List.of(mockUser));
+
+        List<UserResponse> list = userService.getInvitedUsers();
+        assertEquals(1, list.size());
+    }
+
+    @Test
+    void resendInvite_Success() {
+        mockUser.setPasswordSet(false);
+        mockUser.setInviteToken("oldToken");
+        when(userRepository.findById("1")).thenReturn(Optional.of(mockUser));
+
+        userService.resendInvite("1");
+
+        assertNotEquals("oldToken", mockUser.getInviteToken());
+        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
+        verify(userRepository).save(mockUser);
+    }
+
+    @Test
+    void resendInvite_AlreadyActive() {
+        mockUser.setPasswordSet(true);
+        mockUser.setInviteToken(null);
+        when(userRepository.findById("1")).thenReturn(Optional.of(mockUser));
+
+        assertThrows(RuntimeException.class, () -> userService.resendInvite("1"));
     }
 }

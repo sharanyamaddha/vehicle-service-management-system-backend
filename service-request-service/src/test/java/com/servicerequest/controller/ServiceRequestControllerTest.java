@@ -95,4 +95,80 @@ public class ServiceRequestControllerTest {
         mockMvc.perform(get("/api/service-requests/status/REQUESTED"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void customerRequests_Success() throws Exception {
+        when(service.getCustomerRequests("c1")).thenReturn(List.of());
+        mockMvc.perform(get("/api/service-requests/customer/c1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void startJob_Success() throws Exception {
+        when(service.startJob("req1")).thenReturn("Job started");
+        mockMvc.perform(patch("/api/service-requests/req1/start"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void requestParts_Success() throws Exception {
+        java.util.List<com.servicerequest.model.UsedPart> parts = java.util.List.of();
+        when(service.requestParts(anyString(), any())).thenReturn("Parts requested");
+
+        mockMvc.perform(post("/api/service-requests/req1/parts/request")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(parts)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void approveParts_Success() throws Exception {
+        when(service.approveParts("req1", "mgr1")).thenReturn("Approved");
+        mockMvc.perform(patch("/api/service-requests/req1/parts/approve")
+                .param("managerId", "mgr1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void allRequests_Success() throws Exception {
+        when(service.getAllRequests()).thenReturn(List.of());
+        mockMvc.perform(get("/api/service-requests/manager"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void technicianRequests_Success() throws Exception {
+        when(service.getTechnicianRequests("t1")).thenReturn(List.of());
+        mockMvc.perform(get("/api/service-requests/technician/t1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void closeRequest_Success() throws Exception {
+        when(service.closeRequest("req1", 100.0)).thenReturn("Closed");
+        mockMvc.perform(patch("/api/service-requests/req1/close")
+                .param("laborCost", "100.0"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getById_Success() throws Exception {
+        when(service.getById("req1")).thenReturn(new com.servicerequest.model.ServiceRequest());
+        mockMvc.perform(get("/api/service-requests/req1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getTechnicianPerformance_Success() throws Exception {
+        when(service.getTechnicianPerformance()).thenReturn(List.of());
+        mockMvc.perform(get("/api/service-requests/technician-performance"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getTechnicianWorkload_Success() throws Exception {
+        when(service.getTechnicianWorkload()).thenReturn(java.util.Collections.emptyMap());
+        mockMvc.perform(get("/api/service-requests/technician-workload"))
+                .andExpect(status().isOk());
+    }
 }

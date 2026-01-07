@@ -41,7 +41,7 @@ public class VehicleServiceImplTest {
         mockVehicle.setModel("Camry");
         mockVehicle.setYear(2020);
         mockVehicle.setColor("White");
-        //mockVehicle.setType("CAR");
+        // mockVehicle.setType("CAR");
         mockVehicle.setDescription("Test Desc");
     }
 
@@ -122,5 +122,30 @@ public class VehicleServiceImplTest {
 
         assertEquals("Vehicle deleted", res);
         verify(vehicleRepo).deleteById("1");
+    }
+
+    @Test
+    void getAllVehicles_Success() {
+        when(vehicleRepo.findAll()).thenReturn(List.of(mockVehicle));
+
+        List<VehicleResponse> list = vehicleService.getAllVehicles();
+
+        assertEquals(1, list.size());
+        assertEquals("AP01AB1234", list.get(0).getRegistrationNumber());
+    }
+
+    @Test
+    void existsByRegistrationNumber_Success() {
+        when(vehicleRepo.existsByRegistrationNumber("AP01AB1234")).thenReturn(true);
+        boolean exists = vehicleService.existsByRegistrationNumber("AP01AB1234");
+        assertTrue(exists);
+    }
+
+    @Test
+    void updateVehicle_NotFound() {
+        VehicleRequest req = new VehicleRequest();
+        when(vehicleRepo.findById("invalid")).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> vehicleService.updateVehicle("invalid", req));
     }
 }

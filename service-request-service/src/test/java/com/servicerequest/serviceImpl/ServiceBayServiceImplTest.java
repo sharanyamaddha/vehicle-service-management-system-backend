@@ -87,6 +87,29 @@ public class ServiceBayServiceImplTest {
     }
 
     @Test
+    void findByBayNumber_Success() {
+        when(bayRepo.findByBayNumber(1)).thenReturn(Optional.of(mockBay));
+        ServiceBay res = bayService.findByBayNumber(1);
+        assertNotNull(res);
+        assertEquals(1, res.getBayNumber());
+    }
+
+    @Test
+    void updateStatus_Success() {
+        when(bayRepo.findByBayNumber(1)).thenReturn(Optional.of(mockBay));
+        bayService.updateStatus(1, false);
+        assertFalse(mockBay.isActive());
+        verify(bayRepo).save(mockBay);
+    }
+
+    @Test
+    void getAllBays_Success() {
+        when(bayRepo.findAll()).thenReturn(List.of(mockBay));
+        List<ServiceBay> list = bayService.getAllBays();
+        assertEquals(1, list.size());
+    }
+
+    @Test
     void getAvailableBays() {
         when(bayRepo.findByAvailableTrueAndActiveTrue()).thenReturn(List.of(mockBay));
 

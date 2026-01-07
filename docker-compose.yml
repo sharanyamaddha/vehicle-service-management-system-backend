@@ -1,0 +1,164 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - vehicle-network
+
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - vehicle-network
+
+  # Discovery & Configuration
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - vehicle-network
+    depends_on:
+      - config-server
+
+  config-server:
+    build: ./config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - vehicle-network
+
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    networks:
+      - vehicle-network
+    depends_on:
+      - eureka-server
+      - config-server
+      - rabbitmq
+
+  # Microservices
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/user-db
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    networks:
+      - vehicle-network
+    depends_on:
+      - mongo
+      - rabbitmq
+      - eureka-server
+      - config-server
+
+  vehicle-service:
+    build: ./vehicle-service
+    container_name: vehicle-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/vehicle-db
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    networks:
+      - vehicle-network
+    depends_on:
+      - mongo
+      - rabbitmq
+      - eureka-server
+      - config-server
+
+  service-request-service:
+    build: ./service-request-service
+    container_name: service-request-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/service-request-db
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - RAZORPAY_KEY=${RAZORPAY_KEY}
+      - RAZORPAY_SECRET=${RAZORPAY_SECRET}
+    networks:
+      - vehicle-network
+    depends_on:
+      - mongo
+      - rabbitmq
+      - eureka-server
+      - config-server
+      - user-service
+      - vehicle-service
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/inventory-db
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    networks:
+      - vehicle-network
+    depends_on:
+      - mongo
+      - rabbitmq
+      - eureka-server
+      - config-server
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/notification-db
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+
+    networks:
+      - vehicle-network
+    depends_on:
+      - mongo
+      - rabbitmq
+      - eureka-server
+      - config-server
+
+volumes:
+  mongo-data:
+
+networks:
+  vehicle-network:
+    driver: bridge

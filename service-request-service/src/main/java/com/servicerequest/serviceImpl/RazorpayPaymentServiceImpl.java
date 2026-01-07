@@ -25,6 +25,7 @@ import com.servicerequest.requestdto.RazorpayVerifyRequest;
 import com.servicerequest.responsedto.RazorpayOrderResponse;
 import com.servicerequest.responsedto.UserResponse;
 import com.servicerequest.service.RazorpayPaymentService;
+import com.servicerequest.service.RazorpayAdapter;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -44,55 +45,52 @@ public class RazorpayPaymentServiceImpl implements RazorpayPaymentService {
     private InvoiceRepository invoiceRepository;
 
     @Autowired
-    private ServiceRequestRepository serviceRequestRepository;
+    private RazorpayAdapter razorpayAdapter;
+
+    @Autowired
+    private ServiceRequestRepository serviceReqRepo;
 
     @Autowired
     private UserClient userClient;
 
     @Override
     public RazorpayOrderResponse createOrder(String invoiceId) {
-        validateConfig();
 
         Invoice invoice = invoiceRepository.findById(invoiceId)
-            .orElseThrow(() -> new PaymentException("Invoice not found"));
+                .orElseThrow(() -> new PaymentException("Invoice not found"));
 
         if (invoice.getStatus() == InvoiceStatus.PAID) {
-            throw new PaymentException("Invoice already paid");
+            throw new PaymentException("Invoice is already paid");
         }
 
-        ServiceRequest sr = serviceRequestRepository.findById(invoice.getServiceRequestId())
-            .orElseThrow(() -> new PaymentException("Service request not found"));
+        // Validate Service Request
+        ServiceRequest request = serviceReqRepo.findById(invoice.getServiceRequestId())
+                .orElseThrow(() -> new PaymentException("Service Request not found"));
 
-        if (sr.getStatus() != ServiceStatus.CLOSED) {
-            throw new PaymentException("Service request must be CLOSED before payment");
-        }
-
-        int amountPaise = (int) Math.round(invoice.getTotal() * 100);
-        if (amountPaise <= 0) {
-            throw new PaymentException("Invoice amount must be greater than zero");
+        if (request.getStatus() != ServiceStatus.CLOSED) {
+            throw new PaymentException("Service Request must be CLOSED to pay");
         }
 
         try {
-            RazorpayClient client = new RazorpayClient(keyId, keySecret);
-
             JSONObject notes = new JSONObject();
             notes.put("invoiceId", invoice.getId());
-            notes.put("serviceRequestId", sr.getId());
-            notes.put("customerId", sr.getCustomerId());
+            notes.put("customerId", invoice.getCustomerId());
 
-            JSONObject options = new JSONObject();
-            options.put("amount", amountPaise);
-            options.put("currency", "INR");
-            options.put("receipt", invoice.getId());
-            options.put("notes", notes);
+            int amountPaise = (int) (invoice.getTotal() * 100);
 
-            Order order = client.orders.create(options);
+            JSONObject orderRequest = new JSONObject();
+            orderRequest.put("amount", amountPaise);
+            orderRequest.put("currency", "INR");
+            orderRequest.put("receipt", "txn_" + System.currentTimeMillis());
+            orderRequest.put("notes", notes);
+
+            Order order = razorpayAdapter.createRazorpayOrder(keyId, keySecret, orderRequest);
 
             // Persist mapping
             invoice.setRazorpayOrderId(order.get("id"));
             invoiceRepository.save(invoice);
 
-            UserResponse customer = safeFetchUser(sr.getCustomerId());
+            UserResponse customer = safeFetchUser(request.getCustomerId());
 
             return new RazorpayOrderResponse(
                     order.get("id"),
@@ -100,13 +98,12 @@ public class RazorpayPaymentServiceImpl implements RazorpayPaymentService {
                     "INR",
                     keyId,
                     invoice.getId(),
-                    sr.getId(),
-                    sr.getCustomerId(),
-                    "Service Invoice " + sr.getRequestNumber(),
+                    request.getId(),
+                    request.getCustomerId(),
+                    "Service Invoice " + request.getRequestNumber(),
                     customer != null ? customer.getUsername() : null,
                     customer != null ? customer.getEmail() : null,
-                    null
-            );
+                    null);
 
         } catch (RazorpayException ex) {
             throw new PaymentException("Failed to create Razorpay order: " + ex.getMessage(), ex);
@@ -118,7 +115,7 @@ public class RazorpayPaymentServiceImpl implements RazorpayPaymentService {
         validateConfig();
 
         Invoice invoice = invoiceRepository.findById(request.getInvoiceId())
-            .orElseThrow(() -> new PaymentException("Invoice not found"));
+                .orElseThrow(() -> new PaymentException("Invoice not found"));
 
         if (!request.getOrderId().equals(invoice.getRazorpayOrderId())) {
             throw new PaymentException("Order mismatch for invoice");
