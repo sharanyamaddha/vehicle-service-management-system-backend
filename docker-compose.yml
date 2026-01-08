@@ -6,50 +6,76 @@ services:
     image: mongo:latest
     container_name: mongo
     ports:
-      - "27017:27017"
+      - "27018:27017" # Changed to 27018 to avoid conflict
     volumes:
       - mongo-data:/data/db
     networks:
       - vehicle-network
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:management-alpine
     container_name: rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5673:5672"   # Changed to 5673 to avoid conflict
+      - "15673:15672"
     networks:
       - vehicle-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      retries: 5
 
   # Discovery & Configuration
   eureka-server:
     build: ./eureka-server
     container_name: eureka-server
     ports:
-      - "8761:8761"
+      - "8762:8761" # Changed to 8762 to avoid conflict
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
       - vehicle-network
     depends_on:
-      - config-server
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: curl --fail http://localhost:8761/actuator/health || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   config-server:
     build: ./config-server
     container_name: config-server
     ports:
-      - "8888:8888"
+      - "8889:8888" # Changed to 8889 to avoid conflict
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,native
+      - SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS=file:///config-repo
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    volumes:
+      - ../vehicle-service-config-repo:/config-repo
+
     networks:
       - vehicle-network
+    healthcheck:
+      test: curl --fail http://localhost:8888/actuator/health || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   # API Gateway
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
     ports:
-      - "8080:8080"
+      - "8088:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
@@ -58,9 +84,12 @@ services:
     networks:
       - vehicle-network
     depends_on:
-      - eureka-server
-      - config-server
-      - rabbitmq
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   # Microservices
   user-service:
@@ -70,15 +99,20 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/user-db
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/vsms_user_db?replicaSet=rs0
+      - SPRING_MONGODB_URI=mongodb://mongo:27017/vsms_user_db?replicaSet=rs0
       - SPRING_RABBITMQ_HOST=rabbitmq
     networks:
       - vehicle-network
     depends_on:
-      - mongo
-      - rabbitmq
-      - eureka-server
-      - config-server
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
 
   vehicle-service:
     build: ./vehicle-service
@@ -87,15 +121,19 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/vehicle-db
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/vehicle-db?replicaSet=rs0
       - SPRING_RABBITMQ_HOST=rabbitmq
     networks:
       - vehicle-network
     depends_on:
-      - mongo
-      - rabbitmq
-      - eureka-server
-      - config-server
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
 
   service-request-service:
     build: ./service-request-service
@@ -104,19 +142,25 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/service-request-db
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/service-request-db?replicaSet=rs0
       - SPRING_RABBITMQ_HOST=rabbitmq
-      - RAZORPAY_KEY=${RAZORPAY_KEY}
-      - RAZORPAY_SECRET=${RAZORPAY_SECRET}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
     networks:
       - vehicle-network
     depends_on:
-      - mongo
-      - rabbitmq
-      - eureka-server
-      - config-server
-      - user-service
-      - vehicle-service
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      vehicle-service:
+        condition: service_started
 
   inventory-service:
     build: ./inventory-service
@@ -125,15 +169,19 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/inventory-db
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/inventory-db?replicaSet=rs0
       - SPRING_RABBITMQ_HOST=rabbitmq
     networks:
       - vehicle-network
     depends_on:
-      - mongo
-      - rabbitmq
-      - eureka-server
-      - config-server
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
 
   notification-service:
     build: ./notification-service
@@ -143,7 +191,7 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/notification-db
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/notification-db?replicaSet=rs0
       - SPRING_RABBITMQ_HOST=rabbitmq
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
@@ -151,10 +199,14 @@ services:
     networks:
       - vehicle-network
     depends_on:
-      - mongo
-      - rabbitmq
-      - eureka-server
-      - config-server
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
 
 volumes:
   mongo-data:
