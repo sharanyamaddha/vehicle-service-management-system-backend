@@ -19,6 +19,9 @@
             **/repository/**,
             **/exception/**,
             **/exceptions/**,
+            **/security/**,
+            **/util/**,
+            **/*Config.java,
             **/*Application.java
         </sonar.coverage.exclusions>
     </properties>
