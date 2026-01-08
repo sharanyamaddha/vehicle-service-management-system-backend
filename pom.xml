@@ -10,6 +10,19 @@
     <name>backend</name>
     <description>Vehicle Service Management System Backend</description>
 
+    <properties>
+        <sonar.coverage.exclusions>
+            **/model/**,
+            **/requestdto/**,
+            **/responsedto/**,
+            **/config/**,
+            **/repository/**,
+            **/exception/**,
+            **/exceptions/**,
+            **/*Application.java
+        </sonar.coverage.exclusions>
+    </properties>
+
     <modules>
         <module>config-server</module>
         <module>eureka-server</module>
